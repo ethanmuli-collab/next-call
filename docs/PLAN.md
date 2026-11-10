@@ -35,7 +35,7 @@
 |---|---|---|---|---|---|---|
 | T1.1 | העתקת קוד v4 ל-`next_call/` (בלי `__pycache__`), הרצת בדיקות בסיס | S11 | verified | `unittest` 6/6 + `smoke_test.py` עובר מהתיקייה החדשה | unittest 6/6 OK; `SMOKE TEST PASSED`. ריצה ראשונה נפלה פעם אחת על חסימת DLL של pyarrow (Application Control של Windows), ריצה חוזרת עברה | - |
 | T1.2 | `git init`, סקירת `.gitignore`, commit ראשון ב-main | S11 | verified | `git status` נקי; אין `.env` / `*.db` ב-`git ls-files` | 37 קבצים ב-commit הראשון; אין `.env`, `*.db`, `data/raw`, `__pycache__`; נוסף `data/kaggle/` ל-`.gitignore` | - |
-| T1.3 | ריפו ציבורי ב-GitHub + push (באישור המשתמש) | S12 | todo | הקישור נפתח, README מוצג | | 15 |
+| T1.3 | ריפו ציבורי ב-GitHub + push (באישור המשתמש) | S12 | verified | הקישור נפתח, README מוצג | https://github.com/ethanmuli-collab/next-call ציבורי, main עלה. ה-push הראשון נחסם כי ב-`.env.example` של v4 היה מפתח אמיתי; הקובץ הוחלף ב-`env.example` ריק וההיסטוריה המקומית נוקתה לפני ה-push | 15 |
 | T1.4 | ריצת בסיס מתועדת: Flow על export רגיל ועל v2 | S5.4, S7 | verified | רגיל: status=ok, 8 תוצרים · v2: gate_failed עם 4 בעיות | רגיל: status=ok, 8/8 תוצרים + call list 25, LR ROC-AUC 0.793 / PR-AUC 0.392, top 20% תופס 54% מול 22% בסדר הגעה · v2: gate_failed, 4 בעיות, exit code 1, אין תוצרי crew2. מצב offline | 9 |
 
 ## Phase 2 - נתונים אמיתיים (Kaggle) · יעד 05.11
@@ -58,7 +58,7 @@
 ## Phase 4 - אפליקציה ואוטומציה · יעד 07.11
 | ID | משימה | ספק | סטטוס | בדיקה | תוצאה | שקף |
 |---|---|---|---|---|---|---|
-| T4.1 | Streamlit: בחירת פרופיל, מסך כישלון שער, תג מצב | S9 | todo | הרצה ידנית של 3 תרחישים + צילומי מסך | | 13 |
+| T4.1 | Streamlit: בחירת פרופיל, מסך כישלון שער, תג מצב | S9 | verified | הרצה ידנית של 3 תרחישים + צילומי מסך | נבדק בדפדפן: ריצה תקינה (4 שלבים ירוקים, KPI, השוואת מודלים), v2 (שער נכשל, 4 כרטיסי בעיה, Crew 2 לא הופעל), כפתור שבירה דקות→שעות (שער נכשל על unit). 3 צילומים ב-`docs/img/`. בחירת פרופיל נדחתה לשלב Kaggle | 13 |
 | T4.2 | (אופציונלי) Flask + n8n: רשימת שיחות בבוקר | S9 | todo | `curl /call-list` מחזיר 20 לידים | | 14 |
 | T4.3 | (אופציונלי) פריסה ל-Streamlit Cloud | S2 | todo | קישור ציבורי עובד | | 15 |
 
@@ -77,8 +77,11 @@
 
 - 2026-11-10 · T1.1, T1.2 · קוד v4 הועתק ל-`next_call/`, בדיקות ירוקות, `git init` ו-commit ראשון. הוחלט: הכול בשיחה אחת, קודם מצב בטוח להגשה ואז Kaggle.
 - 2026-11-10 · T1.4 · ריצת בסיס על שני הקבצים, התוצרים נכנסו לריפו. `run_summary.json` שומר עכשיו נתיבים יחסיים לריפו.
+- 2026-11-10 · T1.3 · ריפו ציבורי + PR #1. מפתח OpenAI שהיה ב-`.env.example` הוסר לפני שעלה משהו לרשת.
+- 2026-11-10 · T4.1 · עיצוב מחדש של `app.py`: פס שלבים, כרטיסי KPI, מסך כישלון שער, כל 8 התוצרים, רשימת שיחות ככרטיסים, כפתור "Break it on purpose".
 
 ## קישורים
+- ריפו: https://github.com/ethanmuli-collab/next-call
 - מצגת (claude.ai Slides, פרטית): https://claude.ai/artifact/2QbU38a5EW65HyfuWbVwDY
   - לעריכה בשיחה חדשה: Artifact `read` על `project/deck.json` ועל `project/slides/<id>.html`, ואז publish לאותו url.
   - שקפים: 1 cover · 2 brief · 3 story · 4 why-v4 · 5 architecture · 6 roadmap. שקפים 7+ נוספים לפי עמודת "שקף".
