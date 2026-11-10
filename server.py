@@ -5,6 +5,8 @@ The n8n endpoints of webhook.py (/health, /call-list, /run) are served by the sa
 """
 from __future__ import annotations
 
+import csv
+import io
 import json
 import os
 import re
@@ -12,7 +14,7 @@ import threading
 from pathlib import Path
 
 import pandas as pd
-from flask import jsonify, request, send_from_directory
+from flask import Response, jsonify, request, send_from_directory
 
 from config import (ARTIFACTS_DIR, BROKEN_EXPORT, CLEAN_EXPORT, CREW1_FILES, CREW2_FILES, DATA_DIR, KAGGLE_EXPORT,
                     ROOT, is_offline, run_dir_for)
@@ -208,6 +210,18 @@ def api_outcome():
         return jsonify(error="invalid lead or outcome"), 400
     record_outcome(lead_id, outcome) if outcome else clear_outcome(lead_id)  # empty outcome = undo
     return jsonify(ok=True)
+
+
+@app.get("/api/outcomes.csv")
+def api_outcomes_csv():
+    """The outcomes the reps marked, as a CSV the CRM can import."""
+    cols = ["lead_id", "outcome", "note", "marked_at"]
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(cols)
+    writer.writerows([o[c] for c in cols] for o in list_outcomes())
+    return Response("\ufeff" + buf.getvalue(), mimetype="text/csv",
+                    headers={"Content-Disposition": "attachment; filename=next_call_outcomes.csv"})
 
 
 @app.get("/api/runs")

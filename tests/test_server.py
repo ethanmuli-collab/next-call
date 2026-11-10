@@ -23,6 +23,11 @@ class ServerApiTest(unittest.TestCase):
         report = self.client.get("/api/runs/leads_weekly_export_v2/file/gate_report.json").get_json()
         self.assertEqual(report["kind"], "text")
 
+    def test_outcomes_export_is_csv(self):
+        res = self.client.get("/api/outcomes.csv")
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(res.get_data(as_text=True).lstrip("\ufeff").startswith("lead_id,outcome,note,marked_at"))
+
     def test_unknown_run_or_file_is_404(self):
         self.assertEqual(self.client.get("/api/runs/..%2F..").status_code, 404)
         self.assertEqual(self.client.get("/api/runs/no_such_run").status_code, 404)
