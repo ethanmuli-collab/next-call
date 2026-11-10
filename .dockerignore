@@ -1,0 +1,10 @@
+.git
+.env
+.env.*
+__pycache__
+data/raw
+data/kaggle
+data/inbox
+data/uploads
+*.db
+.venv

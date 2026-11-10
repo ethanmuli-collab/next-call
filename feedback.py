@@ -29,6 +29,12 @@ def record_outcome(lead_id: str, outcome: str, note: str = "", db: Path = OUTCOM
                     (lead_id, outcome, note[:500], datetime.now().isoformat(timespec="seconds")))
 
 
+def clear_outcome(lead_id: str, db: Path = OUTCOMES_DB) -> None:
+    """Undo a mark made by mistake."""
+    with closing(_conn(db)) as con, con:
+        con.execute("DELETE FROM outcomes WHERE lead_id = ?", (lead_id,))
+
+
 def list_outcomes(db: Path = OUTCOMES_DB) -> list[dict]:
     if not db.exists():
         return []

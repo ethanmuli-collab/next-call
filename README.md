@@ -3,16 +3,47 @@
 **A CrewAI Flow where two agent crews work as one team, with a data contract between them that the machine enforces.**
 Final project, AI Developers course (cohort 13). Brief: "Industry-Simulated AI Product Workflow" (Harbor & Vale).
 
-The product story: an admissions rep at a vocational college gets hundreds of leads a month and calls them in arrival
-order, while a hot lead goes cold within 48 hours. Next Call gives the rep a ranked call list every morning, with two
-opening lines per lead. The engineering story, and the real point of the project, is the **seam** between the crews:
+The product story: the admissions desk of a vocational college gets hundreds of leads a month. The CRM stores them
+and sorts them by date, so the reps call in arrival order while a hot lead goes cold within 48 hours. Next Call is a
+**prioritisation layer on top of the existing CRM**, not a replacement for it: every morning it takes the CRM export,
+checks it, and gives the reps a ranked call list with an opening line per lead. Two users: the **desk manager** connects
+the export once and is told when a file is stopped; the **reps** work the list and mark outcomes, which go back to the
+CRM as a CSV. The engineering story, and the real point of the project, is the **seam** between the crews:
 a contract one crew publishes and the other must honour, and a Flow that stops with a readable message when they disagree.
 
-| Normal run | Broken handoff |
+| Today's calls | A broken file is stopped |
 |---|---|
-| ![Pipeline passed](docs/img/app_pipeline_ok.jpg) | ![Gate failed](docs/img/app_gate_failed.jpg) |
+| ![Today's calls](docs/img/web_today.jpg) | ![Gate failed](docs/img/web_gate_failed.jpg) |
 
-![Call list](docs/img/app_call_list.jpg)
+## The app
+
+```bash
+python server.py        # http://127.0.0.1:8000
+```
+
+A Flask API (`server.py`) with a plain HTML/CSS/JS front end (`web/`), in Hebrew, built for the rep:
+
+- **Today's calls** - the ranked list, why each lead is on it, an opening line to copy, one click to mark what happened.
+- **Lead source** - the morning sync ("sync now" runs it by hand), or drop a CSV / pick a sample. The four stages run
+  live, and you get a list or a plain explanation of why the file was stopped.
+- **Website lead form** (`/#/form`) - what a prospect fills in on the college's site. The lead joins the call list at
+  the next sync, ranked with everyone else, with an opening line based on what they wrote.
+- **Behind the scenes** - every run with its 8 artifacts, the model comparison, the Flow log, and a one-click
+  "change a unit" test that makes the gate refuse the handoff.
+
+![Home](docs/img/web_home.jpg)
+
+**Why not inside the CRM?** A CRM does not rank leads, and the ranking depends on data that crosses from one system
+to another. That crossing is where things break silently (a CRM upgrade renames a column or changes a unit), which is
+exactly the failure the brief describes. So the layer is separate, and it has a contract and a gate at its entrance.
+In this version the source is the CRM's export file and the morning automation is the n8n workflow in `n8n/`
+(defined, not run end to end here); a direct CRM API connector is the next step.
+
+## Deploy
+
+`Dockerfile` runs the web app with gunicorn on port 7860 (one worker: the state of the running Flow is in memory).
+Without `OPENAI_API_KEY` it runs in offline mode, which is how a public demo should run.
+`deploy/huggingface/` holds the two files of a Hugging Face Space that builds straight from this repo.
 
 ## How it works
 
@@ -30,7 +61,7 @@ flowchart LR
     end
     C2 -->|features.csv, model.joblib,<br/>evaluation_report.md, model_card.md| S[Score open leads<br/>p x recency decay + openers]
     S --> CL[call_list.json]
-    CL --> UI[Streamlit app.py]
+    CL --> UI[Web app<br/>server.py + web/]
     CL --> API[Flask webhook.py<br/>GET /call-list]
     UI -->|rep marks outcome| DB[(SQLite outcomes.db)] -->|labels for retraining| C1
 ```
@@ -62,7 +93,7 @@ pip install -r requirements.txt
 
 python flow.py                                             # full Flow: 8 artifacts + call list
 python flow.py --input data/raw/leads_weekly_export_v2.csv # broken export: the gate stops the Flow
-streamlit run app.py                                       # the app
+python server.py                                           # the web app: http://127.0.0.1:8000
 ```
 
 The synthetic exports in `data/raw/` are generated on the first run (fixed seed), so no download is needed.
@@ -86,7 +117,8 @@ Other commands:
 ```bash
 python flow.py --from-handoff            # skip Crew 1, re-validate the existing clean_data.csv, then model
 python flow.py --run-dir artifacts/my_run  # write the artifacts somewhere else
-python -m unittest -v                    # 10 contract unit tests (both dataset profiles)
+python -m unittest -v                    # 16 unit tests: the contract gate (both profiles) and the web API
+streamlit run app.py                     # the same Flow in a Streamlit console (English)
 python smoke_test.py                     # end to end, offline, outbound network blocked
 python webhook.py                        # Flask: http://127.0.0.1:5055/call-list?top=20
 ```
@@ -127,8 +159,8 @@ A validation you have never seen fail is untested code. Three ways to watch the 
 | `features.csv`, `model.joblib`, `evaluation_report.md` (2+ variations), `model_card.md` | `tools/features.py`, `tools/modeling.py` (logistic regression vs HistGradientBoosting vs arrival-order baseline), `tools/model_card.py` → `artifacts/<run>/crew2/` |
 | Validate contract vs data; required features exist before modeling | `contract/validate.py`: schema, dtypes, allowed values, ranges, units, nulls, key uniqueness, row count, target rate, model features, contract structure, fingerprint |
 | Deterministic, logged, artifacts in the repo | fixed seeds, time-based split, `as_of` taken from the data and not the clock; `flow.log`, `gate_report.json`, `run_summary.json`; the smoke test checks byte-identical reruns |
-| Fail gracefully with a readable message | `contract_gate` router → `stop`; shown in the CLI (exit code 1), the Streamlit app and Flask (HTTP 409) |
-| Streamlit or Flask | `app.py` (Streamlit) and `webhook.py` (Flask) |
+| Fail gracefully with a readable message | `contract_gate` router → `stop`; shown in the CLI (exit code 1), the web app, the Streamlit console and the webhook (HTTP 409) |
+| Streamlit or Flask, front end in HTML + CSS | `server.py` (Flask API) + `web/` (HTML, CSS, JS); also `app.py` (Streamlit) and `webhook.py` (n8n endpoints) |
 | Secrets out of the repo | `.env` via python-dotenv, `env.example`, `.gitignore` (`.env`, raw data, `*.db`, venvs) |
 | Git + GitHub with Pull Requests | one branch and one PR per task, see the [PR history](https://github.com/ethanmuli-collab/next-call/pulls?q=is%3Apr) |
 
@@ -185,7 +217,7 @@ With a 38.5% base rate the top 20% of a list can hold at most 52% of the convers
   for leads nobody called yet.
 - Age band and region are model features. See the fairness notes in `model_card.md`; the score only orders calls, it
   never removes a lead from the list.
-- Single-user SQLite feedback store, no authentication on the Streamlit app, and Flask `POST /run` is protected only by
+- Single-user SQLite feedback store, no authentication on the apps (the web app binds to 127.0.0.1 and runs one Flow at a time), and Flask `POST /run` is protected only by
   an optional `WEBHOOK_TOKEN`.
 - Optional extras that are in the repo but outside the core demo: `n8n/morning_call_list.json` (a morning workflow that
   calls the Flask endpoint).
