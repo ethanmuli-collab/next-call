@@ -86,12 +86,13 @@
 - 2026-11-10 · Phase 2 (Kaggle) בוצע בסוף היום כפרופיל נתונים שני: חוזה משלו, כלי ניקוי, stratified split, הדגמת שבירה ובדיקות. T4.2/T4.3 (אופציונליים) לא בוצעו.
 - 2026-11-10 · T4.4 · אפליקציית ווב בעברית מעל אותו Flow (`server.py` + `web/`): מוצר לנציג במקום לוח בקרה. ה-Streamlit נשאר כקונסולה.
 - 2026-11-10 · T4.5 · חידוד: Next Call הוא שכבת תעדוף מעל ה-CRM. שני משתמשים (מנהל מוקד, נציגים). המצגת נפתחת בבעיה ובמשתמשים, מציגה את 6 דרישות התדריך, ומסמנת כל שקף בדרישה שהוא עונה עליה.
+- 2026-11-10 · T5.3 · המצגת קוצרה ל-6 שקפים לבקשת המשתמש: בעיה, משתמשים, Flow של המערכת, האפליקציה, וטבלת דרישה מול מענה.
 
 ## קישורים
 - ריפו: https://github.com/ethanmuli-collab/next-call
 - מצגת (claude.ai Slides, פרטית): https://claude.ai/artifact/2QbU38a5EW65HyfuWbVwDY
   - לעריכה בשיחה חדשה: Artifact `read` על `project/deck.json` ועל `project/slides/<id>.html`, ואז publish לאותו url.
-  - שקפים (14): cover · story · users · brief · requirements · architecture · contract · run-ok · kaggle · break · llm · app · repo · done.
+  - שקפים (6): cover · story (הבעיה) · users (למי) · architecture (ה-Flow בחמישה צעדים) · app · done (דרישה מול מענה).
   - כל פסקה בעברית עטופה ב-RLE/PDF, ומשפט לא מתחיל במילה באנגלית (אחרת הסדר מתהפך).
   - טקסט עברי עם מילים באנגלית עטוף ב-`&#8235;...&#8236;` (RLE/PDF) כדי שהכיוון יהיה מימין לשמאל.
 - תדריך רשמי: `../../Final Project/final_project.html`
