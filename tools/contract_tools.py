@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from contract import spec
+from contract import get_spec
 from contract.validate import file_sha256
 from tools.eda import load_clean
 
@@ -23,17 +23,18 @@ def _observed(s: pd.Series, dtype: str) -> dict:
     return obs
 
 
-def build_contract(clean_path: Path, out_json: Path, input_name: str) -> dict:
+def build_contract(clean_path: Path, out_json: Path, input_name: str, dataset: str = "synthetic") -> dict:
     """Write dataset_contract.json for the clean data and return it."""
+    spec = get_spec(dataset)
     df = load_clean(clean_path)
     columns = copy.deepcopy(spec.COLUMNS)
     for name, col in columns.items():
         col.setdefault("nullable", False)
         col["observed"] = _observed(df[name], col["dtype"]) if name in df else "MISSING IN CLEAN DATA"
-    as_of = str(df["created_at"].max()) if "created_at" in df else None
+    as_of = str(df[spec.TIME_COLUMN].max()) if spec.TIME_COLUMN and spec.TIME_COLUMN in df else None
     contract = {
         "contract_version": spec.CONTRACT_VERSION,
-        "dataset": "admissions_leads_clean",
+        "dataset": spec.DATASET_NAME,
         "produced_by": "Crew 1 - Data Analyst (contract agent)",
         "consumed_by": "Crew 2 - Data Scientist",
         "source_export": input_name,
@@ -41,10 +42,9 @@ def build_contract(clean_path: Path, out_json: Path, input_name: str) -> dict:
         "row_count": int(len(df)),
         "as_of": as_of,
         "primary_key": spec.DATASET_RULES["unique_key"],
-        "target": {"column": "converted", "positive_label": 1,
-                   "definition": "lead enrolled in a paid course; null = still open"},
-        "time_column": "created_at",
-        "split_policy": "time-based: train on older leads, test on the most recent ones",
+        "target": {"column": "converted", "positive_label": 1, "definition": spec.TARGET_DEFINITION},
+        "time_column": spec.TIME_COLUMN,
+        "split_policy": spec.SPLIT_POLICY,
         "columns": columns,
         "model_features": spec.MODEL_FEATURES,
         "excluded_from_model": spec.EXCLUDED_FROM_MODEL,

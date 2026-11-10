@@ -10,6 +10,7 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.inspection import permutation_importance
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score, brier_score_loss, log_loss, roc_auc_score
+from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -56,11 +57,22 @@ def time_split(feat: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, str]:
     return lab[lab["created_at"] < cut], lab[lab["created_at"] >= cut], str(cut)
 
 
+def stratified_split(feat: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """For datasets without a time column: seeded 80/20 split, stratified on the target."""
+    lab = feat[feat["converted"].notna()].sort_values("lead_id", kind="stable")
+    train, test = train_test_split(lab, test_size=TEST_FRACTION, random_state=SEED, stratify=lab["converted"])
+    return train.sort_values("lead_id", kind="stable"), test.sort_values("lead_id", kind="stable")
+
+
 def train_and_compare(features_csv: Path, model_out: Path, contract: dict) -> dict:
-    """Train both variations, compare on the time-based holdout, refit the winner, save it."""
+    """Train both variations, compare on the holdout the contract prescribes, refit the winner, save it."""
     feat = pd.read_csv(features_csv, encoding="utf-8")
     cols = feature_columns(feat)
-    train, test, cutoff = time_split(feat)
+    timed = bool(contract.get("time_column"))
+    if timed:
+        train, test, cutoff = time_split(feat)
+    else:
+        (train, test), cutoff = stratified_split(feat), None
     ytr, yte = train["converted"].astype(int).values, test["converted"].astype(int).values
     results: dict = {}
     fitted = {}
@@ -85,10 +97,14 @@ def train_and_compare(features_csv: Path, model_out: Path, contract: dict) -> di
               "cutoff": cutoff, "train_rows": int(len(lab)), "contract_version": contract["contract_version"],
               "as_of": contract.get("as_of")}
     joblib.dump(bundle, model_out)
-    return {"selected_model": best, "selection_rule": "highest PR-AUC on the time-based holdout",
-            "split": {"train_rows": int(len(train)), "test_rows": int(len(test)), "cutoff": cutoff,
-                      "train_positive_rate": round(float(ytr.mean()), 4),
-                      "test_positive_rate": round(float(yte.mean()), 4)},
+    split = {"train_rows": int(len(train)), "test_rows": int(len(test)), "cutoff": cutoff,
+             "train_positive_rate": round(float(ytr.mean()), 4),
+             "test_positive_rate": round(float(yte.mean()), 4)}
+    if not timed:
+        split["policy"] = f"stratified random split, seed {SEED}"
+    return {"selected_model": best,
+            "selection_rule": f"highest PR-AUC on the {'time-based' if timed else 'stratified'} holdout",
+            "split": split,
             "results": results, "top_features": {k: float(v) for k, v in importance.items()},
             "n_features": len(cols), "final_model_trained_on_rows": int(len(lab))}
 
@@ -115,6 +131,14 @@ def write_evaluation_report(ev: dict, narrative: str, out_md: Path, mode: str) -
                     f"{m.get('log_loss', '-')} | {m['capture_at_20pct']:.1%} | {m['precision_at_top10pct']:.1%} | "
                     f"{m['lift_at_top10pct']} |")
     s = ev["split"]
+    if s.get("policy"):
+        holdout = "stratified"
+        split_line = (f"**{s['policy'].capitalize()}** (contract split policy; the dataset has no time column): "
+                      f"train = {s['train_rows']} leads, test = {s['test_rows']} leads.")
+    else:
+        holdout = "time-based"
+        split_line = (f"**Time-based split** (contract split policy): train = {s['train_rows']} leads created before "
+                      f"{s['cutoff']}, test = {s['test_rows']} newest labelled leads.")
     imp = "\n".join(f"| {k} | {v:.4f} |" for k, v in ev["top_features"].items())
     out_md.write_text(f"""# Evaluation report - lead conversion model
 
@@ -122,11 +146,11 @@ _Commentary written by: {mode}. All numbers computed by the training tool._
 
 ## Setup
 - Target: `converted` (1 = enrolled). Open leads (no outcome yet) are excluded from training and scored later.
-- **Time-based split** (contract split policy): train = {s['train_rows']} leads created before {s['cutoff']}, test = {s['test_rows']} newest labelled leads.
+- {split_line}
 - Positive rate: train {s['train_positive_rate']:.1%}, test {s['test_positive_rate']:.1%}. {ev['n_features']} features.
 - Selection rule: {ev['selection_rule']}. Winner refit on all {ev['final_model_trained_on_rows']} labelled leads -> `model.joblib`.
 
-## Model comparison (time-based holdout)
+## Model comparison ({holdout} holdout)
 
 | model | ROC-AUC | PR-AUC | Brier | log loss | capture@20% | precision@top10% | lift@top10% |
 |---|---|---|---|---|---|---|---|

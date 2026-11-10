@@ -1,0 +1,277 @@
+{
+  "contract_version": "1.0",
+  "dataset": "kaggle_lead_scoring_clean",
+  "produced_by": "Crew 1 - Data Analyst (contract agent)",
+  "consumed_by": "Crew 2 - Data Scientist",
+  "source_export": "Lead Scoring.csv",
+  "file": "clean_data.csv",
+  "row_count": 9240,
+  "as_of": null,
+  "primary_key": "lead_id",
+  "target": {
+    "column": "converted",
+    "positive_label": 1,
+    "definition": "lead converted to a paying customer of X Education"
+  },
+  "time_column": null,
+  "split_policy": "stratified random 80/20 split with a fixed seed (the dataset has no time column)",
+  "columns": {
+    "lead_id": {
+      "dtype": "string",
+      "unique": true,
+      "description": "Lead Number from the CRM (primary key).",
+      "nullable": false,
+      "observed": {
+        "null_frac": 0.0,
+        "n_unique": 9240
+      }
+    },
+    "lead_origin": {
+      "dtype": "category",
+      "allowed": [
+        "landing_page_submission",
+        "api",
+        "lead_add_form",
+        "lead_import",
+        "quick_add_form"
+      ],
+      "description": "How the lead entered the CRM.",
+      "nullable": false,
+      "observed": {
+        "null_frac": 0.0,
+        "n_unique": 5
+      }
+    },
+    "lead_source": {
+      "dtype": "category",
+      "allowed": [
+        "google",
+        "direct_traffic",
+        "olark_chat",
+        "organic_search",
+        "reference",
+        "welingak_website",
+        "referral_sites",
+        "facebook",
+        "other",
+        "unknown"
+      ],
+      "description": "Traffic source, normalised; rare sources = 'other', blank = 'unknown'.",
+      "nullable": false,
+      "observed": {
+        "null_frac": 0.0,
+        "n_unique": 10
+      }
+    },
+    "do_not_email": {
+      "dtype": "binary",
+      "allowed": [
+        0,
+        1
+      ],
+      "description": "1 if the lead opted out of email.",
+      "nullable": false,
+      "observed": {
+        "null_frac": 0.0,
+        "n_unique": 2,
+        "min": 0.0,
+        "max": 1.0,
+        "median": 0.0
+      }
+    },
+    "total_visits": {
+      "dtype": "int",
+      "min": 0,
+      "max": 300,
+      "unit": "visits",
+      "description": "Site visits; missing values imputed with the median.",
+      "nullable": false,
+      "observed": {
+        "null_frac": 0.0,
+        "n_unique": 41,
+        "min": 0.0,
+        "max": 251.0,
+        "median": 3.0
+      }
+    },
+    "time_on_site_sec": {
+      "dtype": "int",
+      "min": 0,
+      "max": 7200,
+      "unit": "seconds",
+      "reference_median": 248,
+      "expected_median_range": [
+        100,
+        700
+      ],
+      "description": "Total time spent on the website, in seconds as exported by the CRM.",
+      "nullable": false,
+      "observed": {
+        "null_frac": 0.0,
+        "n_unique": 1731,
+        "min": 0.0,
+        "max": 2272.0,
+        "median": 248.0
+      }
+    },
+    "pages_per_visit": {
+      "dtype": "float",
+      "min": 0,
+      "max": 60,
+      "unit": "pages",
+      "description": "Average pages per visit; missing values imputed with the median.",
+      "nullable": false,
+      "observed": {
+        "null_frac": 0.0,
+        "n_unique": 114,
+        "min": 0.0,
+        "max": 55.0,
+        "median": 2.0
+      }
+    },
+    "specialization": {
+      "dtype": "category",
+      "allowed": [
+        "finance_management",
+        "human_resource_management",
+        "marketing_management",
+        "operations_management",
+        "business_administration",
+        "it_projects_management",
+        "supply_chain_management",
+        "banking_investment_and_insurance",
+        "media_and_advertising",
+        "travel_and_tourism",
+        "international_business",
+        "healthcare_management",
+        "hospitality_management",
+        "e_commerce",
+        "retail_management",
+        "rural_and_agribusiness",
+        "e_business",
+        "services_excellence",
+        "not_selected"
+      ],
+      "description": "Field of interest; the form default 'Select' and blanks = 'not_selected'.",
+      "nullable": false,
+      "observed": {
+        "null_frac": 0.0,
+        "n_unique": 19
+      }
+    },
+    "occupation": {
+      "dtype": "category",
+      "allowed": [
+        "unemployed",
+        "working_professional",
+        "student",
+        "other",
+        "housewife",
+        "businessman",
+        "unknown"
+      ],
+      "description": "Current occupation; blank = 'unknown'.",
+      "nullable": false,
+      "observed": {
+        "null_frac": 0.0,
+        "n_unique": 7
+      }
+    },
+    "city": {
+      "dtype": "category",
+      "allowed": [
+        "mumbai",
+        "thane_outskirts",
+        "other_cities",
+        "other_cities_of_maharashtra",
+        "other_metro_cities",
+        "tier_ii_cities",
+        "not_selected"
+      ],
+      "description": "City group; 'Select' and blanks = 'not_selected'.",
+      "nullable": false,
+      "observed": {
+        "null_frac": 0.0,
+        "n_unique": 7
+      }
+    },
+    "free_copy_requested": {
+      "dtype": "binary",
+      "allowed": [
+        0,
+        1
+      ],
+      "description": "1 if the lead asked for the free 'Mastering The Interview' copy.",
+      "nullable": false,
+      "observed": {
+        "null_frac": 0.0,
+        "n_unique": 2,
+        "min": 0.0,
+        "max": 1.0,
+        "median": 0.0
+      }
+    },
+    "converted": {
+      "dtype": "binary",
+      "allowed": [
+        0,
+        1
+      ],
+      "role": "target",
+      "description": "1 = became a paying customer, 0 = did not.",
+      "nullable": false,
+      "observed": {
+        "null_frac": 0.0,
+        "n_unique": 2,
+        "min": 0.0,
+        "max": 1.0,
+        "median": 0.0
+      }
+    }
+  },
+  "model_features": [
+    "lead_origin",
+    "lead_source",
+    "do_not_email",
+    "total_visits",
+    "time_on_site_sec",
+    "pages_per_visit",
+    "specialization",
+    "occupation",
+    "city",
+    "free_copy_requested"
+  ],
+  "excluded_from_model": {
+    "lead_id": "identifier",
+    "Tags": "dropped at cleaning - LEAKAGE: written by the sales team after talking to the lead",
+    "Lead Quality": "dropped at cleaning - LEAKAGE: sales rep's judgement after contact",
+    "Lead Profile": "dropped at cleaning - LEAKAGE: assigned by sales after contact",
+    "Last Activity / Last Notable Activity": "dropped at cleaning - LEAKAGE: includes post-contact events",
+    "Asymmetrique * (4 columns)": "dropped at cleaning - vendor scores computed after engagement, 46% missing",
+    "Country": "dropped at cleaning - 27% missing and almost a single value",
+    "How did you hear / What matters most": "dropped at cleaning - mostly blank or the form default 'Select'",
+    "Do Not Call, Search, Magazine, Newspaper, ... (11 flags)": "dropped at cleaning - constant or near constant"
+  },
+  "constraints": {
+    "min_rows": 5000,
+    "unique_key": "lead_id",
+    "target_rate_range": [
+      0.2,
+      0.6
+    ],
+    "max_unknown_category_frac": 0.0,
+    "default_max_null_frac": 0.0
+  },
+  "assumptions": [
+    "One row per lead (Lead Number is unique).",
+    "time_on_site_sec is in seconds; the reference median is about 4 minutes. A median outside 100-700 means the unit changed.",
+    "The form default 'Select' means the lead did not choose a value; it is treated as 'not_selected', never as a category.",
+    "Columns filled in by the sales team after contact were dropped at cleaning (leakage) and must not come back as features.",
+    "There is no time column: the modeling crew must use a stratified random split with a fixed seed.",
+    "converted is known for every row; there are no open leads in this dataset, so no call list is produced from it."
+  ],
+  "data_fingerprint": {
+    "sha256": "42a1dd08ae3396439121858f047e54748486d3a9ada6bc12624aea72af9ef580",
+    "rows": 9240
+  }
+}

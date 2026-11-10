@@ -1,30 +1,30 @@
-18:33:01 INFO === Next Call flow | input=leads_weekly_export.csv | mode=OFFLINE | feedback=False | from_handoff=False
-18:33:01 INFO [crew1] agents: ['Ingest & Cleaning Analyst', 'EDA & Insights Analyst', 'Data Contract Owner']
-18:33:01 INFO [offline] Ingest & Cleaning Analyst -> tool 'clean_leads_export'
-18:33:02 INFO [offline] EDA & Insights Analyst -> tool 'build_eda_report'
-18:33:02 INFO [offline] Data Contract Owner -> tool 'publish_dataset_contract'
-18:33:02 INFO [crew1/clean] removed 100 duplicate lead_id rows (double submissions)
-18:33:02 INFO [crew1/clean] parsed created_at; dropped 0 unparseable rows
-18:33:02 INFO [crew1/clean] normalised source spellings (e.g. 'FB Lead Ad' -> facebook_form)
-18:33:02 INFO [crew1/clean] normalised region spellings (e.g. 'TLV' -> tel_aviv)
-18:33:02 INFO [crew1/clean] filled 184 blank age_band values with 'unknown'
-18:33:02 INFO [crew1/clean] imputed 134 missing pages_viewed with median 3
-18:33:02 INFO [crew1/clean] set 18 negative response times (CRM glitch) to null
-18:33:02 INFO [crew1] artifact clean_data.csv         OK
-18:33:02 INFO [crew1] artifact eda_report.html        OK
-18:33:02 INFO [crew1] artifact insights.md            OK
-18:33:02 INFO [crew1] artifact dataset_contract.json  OK
-18:33:02 INFO [gate] Contract gate PASSED (20 checks).
-18:33:02 INFO [crew2] agents: ['Feature Engineer', 'Model Trainer & Evaluator', 'Model Card Writer']
-18:33:02 INFO [offline] Feature Engineer -> tool 'engineer_features'
-18:33:02 INFO [offline] Model Trainer & Evaluator -> tool 'train_and_compare_models'
-18:33:03 INFO [offline] Model Card Writer -> tool 'get_model_card_facts'
-18:33:03 INFO [crew2/eval] logistic_regression      {'roc_auc': 0.7931, 'pr_auc': 0.3921, 'brier': 0.0901, 'log_loss': 0.3046, 'capture_at_20pct': 0.5385, 'precision_at_top10pct': 0.3918, 'lift_at_top10pct': 3.25}
-18:33:03 INFO [crew2/eval] hist_gradient_boosting   {'roc_auc': 0.742, 'pr_auc': 0.3274, 'brier': 0.0972, 'log_loss': 0.332, 'capture_at_20pct': 0.4957, 'precision_at_top10pct': 0.3711, 'lift_at_top10pct': 3.08}
-18:33:03 INFO [crew2/eval] baseline_arrival_order   {'capture_at_20pct': 0.2222, 'precision_at_top10pct': 0.1134, 'lift_at_top10pct': 0.94}
-18:33:03 INFO [crew2] artifact features.csv           OK
-18:33:03 INFO [crew2] artifact model.joblib           OK
-18:33:03 INFO [crew2] artifact evaluation_report.md   OK
-18:33:03 INFO [crew2] artifact model_card.md          OK
-18:33:03 INFO [call-list] 25 leads ranked; openers by template; top lead L104982 (p=0.66)
-18:33:03 INFO === status=ok
+19:26:22 INFO === Next Call flow | dataset=synthetic | input=leads_weekly_export.csv | mode=OFFLINE | feedback=False | from_handoff=False
+19:26:22 INFO [crew1] agents: ['Ingest & Cleaning Analyst', 'EDA & Insights Analyst', 'Data Contract Owner']
+19:26:22 INFO [offline] Ingest & Cleaning Analyst -> tool 'clean_leads_export'
+19:26:22 INFO [offline] EDA & Insights Analyst -> tool 'build_eda_report'
+19:26:23 INFO [offline] Data Contract Owner -> tool 'publish_dataset_contract'
+19:26:23 INFO [crew1/clean] removed 100 duplicate lead_id rows (double submissions)
+19:26:23 INFO [crew1/clean] parsed created_at; dropped 0 unparseable rows
+19:26:23 INFO [crew1/clean] normalised source spellings (e.g. 'FB Lead Ad' -> facebook_form)
+19:26:23 INFO [crew1/clean] normalised region spellings (e.g. 'TLV' -> tel_aviv)
+19:26:23 INFO [crew1/clean] filled 184 blank age_band values with 'unknown'
+19:26:23 INFO [crew1/clean] imputed 134 missing pages_viewed with median 3
+19:26:23 INFO [crew1/clean] set 18 negative response times (CRM glitch) to null
+19:26:23 INFO [crew1] artifact clean_data.csv         OK
+19:26:23 INFO [crew1] artifact eda_report.html        OK
+19:26:23 INFO [crew1] artifact insights.md            OK
+19:26:23 INFO [crew1] artifact dataset_contract.json  OK
+19:26:23 INFO [gate] Contract gate PASSED (20 checks).
+19:26:23 INFO [crew2] agents: ['Feature Engineer', 'Model Trainer & Evaluator', 'Model Card Writer']
+19:26:23 INFO [offline] Feature Engineer -> tool 'engineer_features'
+19:26:23 INFO [offline] Model Trainer & Evaluator -> tool 'train_and_compare_models'
+19:26:24 INFO [offline] Model Card Writer -> tool 'get_model_card_facts'
+19:26:24 INFO [crew2/eval] logistic_regression      {'roc_auc': 0.7931, 'pr_auc': 0.3921, 'brier': 0.0901, 'log_loss': 0.3046, 'capture_at_20pct': 0.5385, 'precision_at_top10pct': 0.3918, 'lift_at_top10pct': 3.25}
+19:26:24 INFO [crew2/eval] hist_gradient_boosting   {'roc_auc': 0.742, 'pr_auc': 0.3274, 'brier': 0.0972, 'log_loss': 0.332, 'capture_at_20pct': 0.4957, 'precision_at_top10pct': 0.3711, 'lift_at_top10pct': 3.08}
+19:26:24 INFO [crew2/eval] baseline_arrival_order   {'capture_at_20pct': 0.2222, 'precision_at_top10pct': 0.1134, 'lift_at_top10pct': 0.94}
+19:26:24 INFO [crew2] artifact features.csv           OK
+19:26:24 INFO [crew2] artifact model.joblib           OK
+19:26:24 INFO [crew2] artifact evaluation_report.md   OK
+19:26:24 INFO [crew2] artifact model_card.md          OK
+19:26:24 INFO [call-list] 25 leads ranked; openers by template; top lead L104982 (p=0.66)
+19:26:24 INFO === status=ok

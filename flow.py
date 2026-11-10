@@ -17,7 +17,8 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 import config  # noqa: F401  (sets CrewAI env flags before crewai is imported)
-from config import CALL_LIST_SIZE, CLEAN_EXPORT, CREW1_FILES, CREW2_FILES, is_offline, run_dir_for
+from config import (ARTIFACTS_DIR, CALL_LIST_SIZE, CLEAN_EXPORT, CREW1_FILES, CREW2_FILES, KAGGLE_EXPORT, is_offline,
+                    run_dir_for)
 from crewai.flow.flow import Flow, listen, router, start  # noqa: E402
 
 from contract.validate import validate  # noqa: E402
@@ -35,6 +36,7 @@ log = logging.getLogger("next_call")
 
 
 class NextCallState(BaseModel):
+    dataset: str = "synthetic"       # dataset profile: synthetic | kaggle
     input_path: str = ""
     run_dir: str = ""
     offline: bool = True
@@ -82,7 +84,7 @@ class NextCallFlow(Flow[NextCallState]):
 
     def _ctx(self, crew: int) -> RunContext:
         """A fresh context per crew; only Crew 1 is given the raw export path."""
-        return RunContext(run_dir=Path(self.state.run_dir),
+        return RunContext(run_dir=Path(self.state.run_dir), dataset=self.state.dataset,
                           raw_path=Path(self.state.input_path) if crew == 1 else None)
 
     @start()
@@ -98,8 +100,8 @@ class NextCallFlow(Flow[NextCallState]):
         (run_dir / "crew1").mkdir(exist_ok=True)
         (run_dir / "crew2").mkdir(exist_ok=True)
         _setup_logging(run_dir)
-        log.info("=== Next Call flow | input=%s | mode=%s | feedback=%s | from_handoff=%s",
-                 Path(self.state.input_path).name, "OFFLINE" if self.state.offline else "LLM",
+        log.info("=== Next Call flow | dataset=%s | input=%s | mode=%s | feedback=%s | from_handoff=%s",
+                 self.state.dataset, Path(self.state.input_path).name, "OFFLINE" if self.state.offline else "LLM",
                  self.state.use_feedback, self.state.from_handoff)
 
     @listen(prepare)
@@ -194,6 +196,13 @@ class NextCallFlow(Flow[NextCallState]):
         if self.state.status == "error":
             self._write_summary()
             return self.state.model_dump()
+        if self.state.dataset == "kaggle":  # every lead already has an outcome: nothing to call
+            self.state.status = "ok"
+            self.state.message = ("Gate passed; model trained on the Kaggle data. No call list: this dataset has "
+                                  "no open leads (the call list comes from the synthetic CRM profile).")
+            log.info("[call-list] skipped for the kaggle profile (no open leads)")
+            self._write_summary()
+            return self.state.model_dump()
         rd = Path(self.state.run_dir)
         cl = build_call_list(rd / "crew1" / "clean_data.csv", rd / "crew1" / "dataset_contract.json",
                              rd / "crew2" / "model.joblib", CALL_LIST_SIZE)
@@ -227,15 +236,22 @@ class NextCallFlow(Flow[NextCallState]):
             h.close()
 
 
-def run_pipeline(input_path: Path = CLEAN_EXPORT, offline: bool | None = None, use_feedback: bool = False,
-                 from_handoff: bool = False, run_dir: Path | None = None) -> dict:
+def run_pipeline(input_path: Path | None = None, offline: bool | None = None, use_feedback: bool = False,
+                 from_handoff: bool = False, run_dir: Path | None = None, dataset: str = "synthetic") -> dict:
     """Programmatic entry point (used by the app, the webhook-free CLI and the smoke test)."""
     from data.generate_data import ensure_data
 
-    ensure_data()
-    input_path = Path(input_path).resolve()
+    if dataset == "kaggle":
+        input_path = Path(input_path or KAGGLE_EXPORT).resolve()
+        if not input_path.exists():
+            raise FileNotFoundError(f"{input_path} not found - download the Kaggle 'Lead Scoring Dataset' "
+                                    "into data/kaggle/ (see README)")
+        run_dir = run_dir or ARTIFACTS_DIR / "kaggle_lead_scoring"
+    else:
+        ensure_data()
+        input_path = Path(input_path or CLEAN_EXPORT).resolve()
     flow = NextCallFlow()
-    flow.kickoff(inputs={"input_path": str(input_path),
+    flow.kickoff(inputs={"dataset": dataset, "input_path": str(input_path),
                          "run_dir": str(run_dir or run_dir_for(input_path)),
                          "offline": is_offline() if offline is None else offline,
                          "use_feedback": use_feedback, "from_handoff": from_handoff})
@@ -244,13 +260,16 @@ def run_pipeline(input_path: Path = CLEAN_EXPORT, offline: bool | None = None, u
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Run the Next Call CrewAI Flow")
-    ap.add_argument("--input", default=str(CLEAN_EXPORT), help="raw weekly export CSV")
+    ap.add_argument("--dataset", choices=["synthetic", "kaggle"], default="synthetic",
+                    help="dataset profile: synthetic CRM export (default) or the Kaggle Lead Scoring file")
+    ap.add_argument("--input", help="raw CSV (default: the profile's own file)")
     ap.add_argument("--offline", action="store_true", help="force offline mode (no LLM)")
     ap.add_argument("--feedback", action="store_true", help="use rep-recorded outcomes as extra labels")
     ap.add_argument("--from-handoff", action="store_true", help="skip Crew 1; re-validate existing clean data")
     ap.add_argument("--run-dir", help="where to write the artifacts (default: artifacts/<input file name>)")
     a = ap.parse_args()
-    state = run_pipeline(Path(a.input), offline=True if a.offline else None, use_feedback=a.feedback,
+    state = run_pipeline(Path(a.input) if a.input else None, offline=True if a.offline else None,
+                         use_feedback=a.feedback, dataset=a.dataset,
                          from_handoff=a.from_handoff, run_dir=Path(a.run_dir).resolve() if a.run_dir else None)
     print("\n" + "=" * 70 + f"\nSTATUS: {state['status']}\n{state['message']}")
     sys.exit(0 if state["status"] == "ok" else 1)

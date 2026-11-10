@@ -1,0 +1,70 @@
+{
+  "dataset": "kaggle",
+  "input_path": "data/kaggle/Lead Scoring.csv",
+  "run_dir": "artifacts/kaggle_lead_scoring",
+  "offline": true,
+  "use_feedback": false,
+  "from_handoff": false,
+  "status": "ok",
+  "message": "Gate passed; model trained on the Kaggle data. No call list: this dataset has no open leads (the call list comes from the synthetic CRM profile).",
+  "gate": {
+    "passed": true,
+    "checks_run": 18,
+    "errors": [],
+    "warnings": [],
+    "summary": "Contract gate PASSED (18 checks)."
+  },
+  "metrics": {
+    "selected_model": "hist_gradient_boosting",
+    "split": {
+      "train_rows": 7392,
+      "test_rows": 1848,
+      "cutoff": null,
+      "train_positive_rate": 0.3854,
+      "test_positive_rate": 0.3853,
+      "policy": "stratified random split, seed 42"
+    },
+    "results": {
+      "logistic_regression": {
+        "roc_auc": 0.8722,
+        "pr_auc": 0.8199,
+        "brier": 0.1386,
+        "log_loss": 0.4337,
+        "capture_at_20pct": 0.4494,
+        "precision_at_top10pct": 0.9457,
+        "lift_at_top10pct": 2.45
+      },
+      "hist_gradient_boosting": {
+        "roc_auc": 0.8843,
+        "pr_auc": 0.8359,
+        "brier": 0.1304,
+        "log_loss": 0.412,
+        "capture_at_20pct": 0.4522,
+        "precision_at_top10pct": 0.962,
+        "lift_at_top10pct": 2.5
+      },
+      "baseline_arrival_order": {
+        "capture_at_20pct": 0.1966,
+        "precision_at_top10pct": 0.375,
+        "lift_at_top10pct": 0.97
+      }
+    }
+  },
+  "narratives": {
+    "crew1": "template",
+    "crew2": "template"
+  },
+  "call_list_rows": 0,
+  "id": "2c6d74d7-7cf6-4b57-b5c7-eebdc27c1e5d",
+  "artifacts": {
+    "crew1/clean_data.csv": true,
+    "crew1/eda_report.html": true,
+    "crew1/insights.md": true,
+    "crew1/dataset_contract.json": true,
+    "crew2/features.csv": true,
+    "crew2/model.joblib": true,
+    "crew2/evaluation_report.md": true,
+    "crew2/model_card.md": true,
+    "call_list.json": false
+  }
+}

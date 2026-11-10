@@ -1,0 +1,32 @@
+19:26:04 INFO === Next Call flow | dataset=kaggle | input=Lead Scoring.csv | mode=OFFLINE | feedback=False | from_handoff=False
+19:26:04 INFO [crew1] agents: ['Ingest & Cleaning Analyst', 'EDA & Insights Analyst', 'Data Contract Owner']
+19:26:04 INFO [offline] Ingest & Cleaning Analyst -> tool 'clean_leads_export'
+19:26:04 INFO [offline] EDA & Insights Analyst -> tool 'build_eda_report'
+19:26:05 INFO [offline] Data Contract Owner -> tool 'publish_dataset_contract'
+19:26:05 INFO [crew1/clean] kept 12 of 37 columns; dropped 25 (sales-entered leakage columns, constants, mostly-blank columns - see the contract)
+19:26:05 INFO [crew1/clean] removed 0 duplicate lead_id rows
+19:26:05 INFO [crew1/clean] specialization: 1942 'Select' (form default) and 1438 blank values set to 'not_selected'
+19:26:05 INFO [crew1/clean] city: 2249 'Select' (form default) and 1420 blank values set to 'not_selected'
+19:26:05 INFO [crew1/clean] occupation: 0 'Select' (form default) and 2690 blank values set to 'unknown'
+19:26:05 INFO [crew1/clean] lead_source: grouped 23 rows from rare sources into 'other'
+19:26:05 INFO [crew1/clean] lead_source: 0 'Select' (form default) and 36 blank values set to 'unknown'
+19:26:05 INFO [crew1/clean] imputed 137 missing total_visits with median 3
+19:26:05 INFO [crew1/clean] imputed 137 missing pages_per_visit with median 2
+19:26:05 INFO [crew1] artifact clean_data.csv         OK
+19:26:05 INFO [crew1] artifact eda_report.html        OK
+19:26:05 INFO [crew1] artifact insights.md            OK
+19:26:05 INFO [crew1] artifact dataset_contract.json  OK
+19:26:05 INFO [gate] Contract gate PASSED (18 checks).
+19:26:05 INFO [crew2] agents: ['Feature Engineer', 'Model Trainer & Evaluator', 'Model Card Writer']
+19:26:05 INFO [offline] Feature Engineer -> tool 'engineer_features'
+19:26:05 INFO [offline] Model Trainer & Evaluator -> tool 'train_and_compare_models'
+19:26:07 INFO [offline] Model Card Writer -> tool 'get_model_card_facts'
+19:26:07 INFO [crew2/eval] logistic_regression      {'roc_auc': 0.8722, 'pr_auc': 0.8199, 'brier': 0.1386, 'log_loss': 0.4337, 'capture_at_20pct': 0.4494, 'precision_at_top10pct': 0.9457, 'lift_at_top10pct': 2.45}
+19:26:07 INFO [crew2/eval] hist_gradient_boosting   {'roc_auc': 0.8843, 'pr_auc': 0.8359, 'brier': 0.1304, 'log_loss': 0.412, 'capture_at_20pct': 0.4522, 'precision_at_top10pct': 0.962, 'lift_at_top10pct': 2.5}
+19:26:07 INFO [crew2/eval] baseline_arrival_order   {'capture_at_20pct': 0.1966, 'precision_at_top10pct': 0.375, 'lift_at_top10pct': 0.97}
+19:26:07 INFO [crew2] artifact features.csv           OK
+19:26:07 INFO [crew2] artifact model.joblib           OK
+19:26:07 INFO [crew2] artifact evaluation_report.md   OK
+19:26:07 INFO [crew2] artifact model_card.md          OK
+19:26:07 INFO [call-list] skipped for the kaggle profile (no open leads)
+19:26:07 INFO === status=ok

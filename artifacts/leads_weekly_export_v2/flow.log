@@ -1,26 +1,26 @@
-18:33:03 INFO === Next Call flow | input=leads_weekly_export_v2.csv | mode=OFFLINE | feedback=False | from_handoff=False
-18:33:03 INFO [crew1] agents: ['Ingest & Cleaning Analyst', 'EDA & Insights Analyst', 'Data Contract Owner']
-18:33:03 INFO [offline] Ingest & Cleaning Analyst -> tool 'clean_leads_export'
-18:33:03 INFO [offline] EDA & Insights Analyst -> tool 'build_eda_report'
-18:33:03 INFO [offline] Data Contract Owner -> tool 'publish_dataset_contract'
-18:33:03 INFO [crew1/clean] WARNING: expected columns missing from export: ['course_interest']
-18:33:03 INFO [crew1/clean] WARNING: unknown columns kept as-is: ['program_interest']
-18:33:03 INFO [crew1/clean] removed 100 duplicate lead_id rows (double submissions)
-18:33:03 INFO [crew1/clean] parsed created_at; dropped 0 unparseable rows
-18:33:03 INFO [crew1/clean] normalised source spellings (e.g. 'FB Lead Ad' -> facebook_form)
-18:33:03 INFO [crew1/clean] normalised region spellings (e.g. 'TLV' -> tel_aviv)
-18:33:03 INFO [crew1/clean] filled 184 blank age_band values with 'unknown'
-18:33:03 INFO [crew1/clean] imputed 134 missing pages_viewed with median 3
-18:33:03 INFO [crew1/clean] set 18 negative response times (CRM glitch) to null
-18:33:03 INFO [crew1] artifact clean_data.csv         OK
-18:33:03 INFO [crew1] artifact eda_report.html        OK
-18:33:03 INFO [crew1] artifact insights.md            OK
-18:33:03 INFO [crew1] artifact dataset_contract.json  OK
-18:33:03 ERROR [gate] Contract gate FAILED - 4 problem(s); Crew 2 (modeling) was NOT started.
-18:33:03 ERROR [gate]   1. [missing_column] Column 'course_interest' is required by the contract but missing from clean_data.csv. Column 'program_interest' holds exactly the allowed values of 'course_interest' - it looks renamed to 'program_interest'.
-18:33:03 ERROR [gate]   2. [range] Column 'response_time_min' has 2567 values (52.0%) outside the declared range [0, 10080] minutes (observed min 120, max 604800). Values are ~60x the contract's reference median (180 minutes) - the unit looks like it changed from minutes to seconds.
-18:33:03 ERROR [gate]   3. [unit] Column 'response_time_min' median is 10740, outside the expected 30-900 minutes. Values are ~60x the contract's reference median (180 minutes) - the unit looks like it changed from minutes to seconds.
-18:33:03 ERROR [gate]   4. [model_features] Required model features missing before modeling: ['course_interest'].
-18:33:03 ERROR [gate]   warning [unexpected_column] Column 'program_interest' is not in the contract; Crew 2 will ignore it.
-18:33:03 ERROR Flow stopped before Crew 2. No features, model or call list were produced.
-18:33:03 INFO === status=gate_failed
+19:26:29 INFO === Next Call flow | dataset=synthetic | input=leads_weekly_export_v2.csv | mode=OFFLINE | feedback=False | from_handoff=False
+19:26:29 INFO [crew1] agents: ['Ingest & Cleaning Analyst', 'EDA & Insights Analyst', 'Data Contract Owner']
+19:26:29 INFO [offline] Ingest & Cleaning Analyst -> tool 'clean_leads_export'
+19:26:29 INFO [offline] EDA & Insights Analyst -> tool 'build_eda_report'
+19:26:30 INFO [offline] Data Contract Owner -> tool 'publish_dataset_contract'
+19:26:30 INFO [crew1/clean] WARNING: expected columns missing from export: ['course_interest']
+19:26:30 INFO [crew1/clean] WARNING: unknown columns kept as-is: ['program_interest']
+19:26:30 INFO [crew1/clean] removed 100 duplicate lead_id rows (double submissions)
+19:26:30 INFO [crew1/clean] parsed created_at; dropped 0 unparseable rows
+19:26:30 INFO [crew1/clean] normalised source spellings (e.g. 'FB Lead Ad' -> facebook_form)
+19:26:30 INFO [crew1/clean] normalised region spellings (e.g. 'TLV' -> tel_aviv)
+19:26:30 INFO [crew1/clean] filled 184 blank age_band values with 'unknown'
+19:26:30 INFO [crew1/clean] imputed 134 missing pages_viewed with median 3
+19:26:30 INFO [crew1/clean] set 18 negative response times (CRM glitch) to null
+19:26:30 INFO [crew1] artifact clean_data.csv         OK
+19:26:30 INFO [crew1] artifact eda_report.html        OK
+19:26:30 INFO [crew1] artifact insights.md            OK
+19:26:30 INFO [crew1] artifact dataset_contract.json  OK
+19:26:30 ERROR [gate] Contract gate FAILED - 4 problem(s); Crew 2 (modeling) was NOT started.
+19:26:30 ERROR [gate]   1. [missing_column] Column 'course_interest' is required by the contract but missing from clean_data.csv. Column 'program_interest' holds exactly the allowed values of 'course_interest' - it looks renamed to 'program_interest'.
+19:26:30 ERROR [gate]   2. [range] Column 'response_time_min' has 2567 values (52.0%) outside the declared range [0, 10080] minutes (observed min 120, max 604800). Values are ~60x the contract's reference median (180 minutes) - the unit looks like it changed from minutes to seconds.
+19:26:30 ERROR [gate]   3. [unit] Column 'response_time_min' median is 10740, outside the expected 30-900 minutes. Values are ~60x the contract's reference median (180 minutes) - the unit looks like it changed from minutes to seconds.
+19:26:30 ERROR [gate]   4. [model_features] Required model features missing before modeling: ['course_interest'].
+19:26:30 ERROR [gate]   warning [unexpected_column] Column 'program_interest' is not in the contract; Crew 2 will ignore it.
+19:26:30 ERROR Flow stopped before Crew 2. No features, model or call list were produced.
+19:26:30 INFO === status=gate_failed

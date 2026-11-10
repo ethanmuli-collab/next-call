@@ -59,7 +59,8 @@ def engineer_features(clean_path: Path, contract_path: Path, out_csv: Path) -> d
     contract = load_contract(contract_path)
     df = load_clean(clean_path)
     X = build_feature_frame(df, contract)
-    full = pd.concat([df[ID_COLS].reset_index(drop=True), X.reset_index(drop=True)], axis=1)
+    ids = [c for c in ID_COLS if c in df.columns]  # a dataset without a time column has no created_at
+    full = pd.concat([df[ids].reset_index(drop=True), X.reset_index(drop=True)], axis=1)
     full.to_csv(out_csv, index=False, encoding="utf-8", date_format="%Y-%m-%d %H:%M")
     return {"rows": int(len(full)), "n_features": int(X.shape[1]),
             "feature_columns": list(X.columns),
