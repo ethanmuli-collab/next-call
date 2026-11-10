@@ -1,0 +1,22 @@
+# secrets
+.env
+.env.*
+# raw CRM dumps (regenerate with: python data/generate_data.py)
+data/raw/
+# local databases (rep outcomes)
+*.db
+*.sqlite
+# python / envs
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+.pytest_cache/
+# editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+# Kaggle raw data (downloaded manually, see README)
+data/kaggle/
