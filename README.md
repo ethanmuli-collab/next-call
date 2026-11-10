@@ -44,6 +44,7 @@ In this version the source is the CRM's export file and the morning automation i
 `Dockerfile` runs the web app with gunicorn on port 7860 (one worker: the state of the running Flow is in memory).
 Without `OPENAI_API_KEY` it runs in offline mode, which is how a public demo should run.
 `deploy/huggingface/` holds the two files of a Hugging Face Space that builds straight from this repo.
+Status: these files were written but the image has not been built or deployed yet; the project is demonstrated locally with `python server.py`.
 
 ## How it works
 
