@@ -70,6 +70,7 @@ Other commands:
 
 ```bash
 python flow.py --from-handoff            # skip Crew 1, re-validate the existing clean_data.csv, then model
+python flow.py --run-dir artifacts/my_run  # write the artifacts somewhere else
 python -m unittest -v tests.test_contract  # 6 contract unit tests
 python smoke_test.py                     # end to end, offline, outbound network blocked
 python webhook.py                        # Flask: http://127.0.0.1:5055/call-list?top=20
@@ -125,6 +126,10 @@ actual check result of every task; Hebrew).
 | Insights, evaluation commentary, model card sections | written by the agents from tool output | templates filled from the same facts |
 | Call openers | one `gpt-4o-mini` JSON call for the list | Hebrew templates keyed on form-text cues |
 | Badge in the app | "LLM mode" | "OFFLINE mode (no LLM)" |
+
+Both modes were run on the same export and are committed: `artifacts/leads_weekly_export/` (offline) and
+`artifacts/leads_weekly_export_llm/` (LLM, `gpt-4o-mini`). The metrics in the two `run_summary.json` files are identical;
+only the wording of the narratives and the call openers differs.
 
 If the LLM fails mid-run (network, quota), the Flow logs a warning and falls back to the offline path for that step.
 `NEXT_CALL_OFFLINE=1` forces offline mode.
