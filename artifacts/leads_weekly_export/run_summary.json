@@ -1,0 +1,69 @@
+{
+  "input_path": "data/raw/leads_weekly_export.csv",
+  "run_dir": "artifacts/leads_weekly_export",
+  "offline": true,
+  "use_feedback": false,
+  "from_handoff": false,
+  "status": "ok",
+  "message": "Gate passed; model trained; call list with 25 leads ready.",
+  "gate": {
+    "passed": true,
+    "checks_run": 20,
+    "errors": [],
+    "warnings": [],
+    "summary": "Contract gate PASSED (20 checks)."
+  },
+  "metrics": {
+    "selected_model": "logistic_regression",
+    "split": {
+      "train_rows": 3885,
+      "test_rows": 972,
+      "cutoff": "2026-08-04 18:55",
+      "train_positive_rate": 0.1302,
+      "test_positive_rate": 0.1204
+    },
+    "results": {
+      "logistic_regression": {
+        "roc_auc": 0.7931,
+        "pr_auc": 0.3921,
+        "brier": 0.0901,
+        "log_loss": 0.3046,
+        "capture_at_20pct": 0.5385,
+        "precision_at_top10pct": 0.3918,
+        "lift_at_top10pct": 3.25
+      },
+      "hist_gradient_boosting": {
+        "roc_auc": 0.742,
+        "pr_auc": 0.3274,
+        "brier": 0.0972,
+        "log_loss": 0.332,
+        "capture_at_20pct": 0.4957,
+        "precision_at_top10pct": 0.3711,
+        "lift_at_top10pct": 3.08
+      },
+      "baseline_arrival_order": {
+        "capture_at_20pct": 0.2222,
+        "precision_at_top10pct": 0.1134,
+        "lift_at_top10pct": 0.94
+      }
+    }
+  },
+  "narratives": {
+    "crew1": "template",
+    "crew2": "template",
+    "openers": "template"
+  },
+  "call_list_rows": 25,
+  "id": "c4028fc6-05d2-45cd-a381-658e864e8ea3",
+  "artifacts": {
+    "crew1/clean_data.csv": true,
+    "crew1/eda_report.html": true,
+    "crew1/insights.md": true,
+    "crew1/dataset_contract.json": true,
+    "crew2/features.csv": true,
+    "crew2/model.joblib": true,
+    "crew2/evaluation_report.md": true,
+    "crew2/model_card.md": true,
+    "call_list.json": true
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "input_path": "data/raw/leads_weekly_export_v2.csv",
+  "run_dir": "artifacts/leads_weekly_export_v2",
+  "offline": true,
+  "use_feedback": false,
+  "from_handoff": false,
+  "status": "gate_failed",
+  "message": "Contract gate FAILED - 4 problem(s); Crew 2 (modeling) was NOT started.\n  1. [missing_column] Column 'course_interest' is required by the contract but missing from clean_data.csv. Column 'program_interest' holds exactly the allowed values of 'course_interest' - it looks renamed to 'program_interest'.\n  2. [range] Column 'response_time_min' has 2567 values (52.0%) outside the declared range [0, 10080] minutes (observed min 120, max 604800). Values are ~60x the contract's reference median (180 minutes) - the unit looks like it changed from minutes to seconds.\n  3. [unit] Column 'response_time_min' median is 10740, outside the expected 30-900 minutes. Values are ~60x the contract's reference median (180 minutes) - the unit looks like it changed from minutes to seconds.\n  4. [model_features] Required model features missing before modeling: ['course_interest'].\n  warning [unexpected_column] Column 'program_interest' is not in the contract; Crew 2 will ignore it.",
+  "gate": {
+    "passed": false,
+    "checks_run": 19,
+    "errors": [
+      {
+        "check": "missing_column",
+        "column": "course_interest",
+        "message": "Column 'course_interest' is required by the contract but missing from clean_data.csv. Column 'program_interest' holds exactly the allowed values of 'course_interest' - it looks renamed to 'program_interest'."
+      },
+      {
+        "check": "range",
+        "column": "response_time_min",
+        "message": "Column 'response_time_min' has 2567 values (52.0%) outside the declared range [0, 10080] minutes (observed min 120, max 604800). Values are ~60x the contract's reference median (180 minutes) - the unit looks like it changed from minutes to seconds."
+      },
+      {
+        "check": "unit",
+        "column": "response_time_min",
+        "message": "Column 'response_time_min' median is 10740, outside the expected 30-900 minutes. Values are ~60x the contract's reference median (180 minutes) - the unit looks like it changed from minutes to seconds."
+      },
+      {
+        "check": "model_features",
+        "column": null,
+        "message": "Required model features missing before modeling: ['course_interest']."
+      }
+    ],
+    "warnings": [
+      {
+        "check": "unexpected_column",
+        "column": "program_interest",
+        "message": "Column 'program_interest' is not in the contract; Crew 2 will ignore it."
+      }
+    ],
+    "summary": "Contract gate FAILED - 4 problem(s); Crew 2 (modeling) was NOT started.\n  1. [missing_column] Column 'course_interest' is required by the contract but missing from clean_data.csv. Column 'program_interest' holds exactly the allowed values of 'course_interest' - it looks renamed to 'program_interest'.\n  2. [range] Column 'response_time_min' has 2567 values (52.0%) outside the declared range [0, 10080] minutes (observed min 120, max 604800). Values are ~60x the contract's reference median (180 minutes) - the unit looks like it changed from minutes to seconds.\n  3. [unit] Column 'response_time_min' median is 10740, outside the expected 30-900 minutes. Values are ~60x the contract's reference median (180 minutes) - the unit looks like it changed from minutes to seconds.\n  4. [model_features] Required model features missing before modeling: ['course_interest'].\n  warning [unexpected_column] Column 'program_interest' is not in the contract; Crew 2 will ignore it."
+  },
+  "metrics": {},
+  "narratives": {
+    "crew1": "template"
+  },
+  "call_list_rows": 0,
+  "id": "f161f32b-8bec-47bf-96e6-412ef296eca7",
+  "artifacts": {
+    "crew1/clean_data.csv": true,
+    "crew1/eda_report.html": true,
+    "crew1/insights.md": true,
+    "crew1/dataset_contract.json": true,
+    "crew2/features.csv": false,
+    "crew2/model.joblib": false,
+    "crew2/evaluation_report.md": false,
+    "crew2/model_card.md": false,
+    "call_list.json": false
+  }
+}

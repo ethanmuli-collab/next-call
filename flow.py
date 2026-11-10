@@ -215,6 +215,10 @@ class NextCallFlow(Flow[NextCallState]):
         files |= {f"crew2/{f}": (rd / "crew2" / f).exists() for f in CREW2_FILES}
         files["call_list.json"] = (rd / "call_list.json").exists()
         summary = self.state.model_dump() | {"artifacts": files}
+        for key in ("input_path", "run_dir"):  # repo-relative, so committed summaries carry no local paths
+            p = Path(summary[key]).resolve()
+            if p.is_relative_to(config.ROOT):
+                summary[key] = p.relative_to(config.ROOT).as_posix()
         (rd / "run_summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2, default=str),
                                              encoding="utf-8")
         log.info("=== status=%s", self.state.status)
