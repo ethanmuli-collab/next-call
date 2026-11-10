@@ -17,7 +17,7 @@
 **Python:** `C:\Users\ethan\anaconda3\envs\rag_env\python.exe` · **מצגת:** ראה "קישורים" למטה
 
 ## המשימה הבאה
-**T1.3** - ריפו ציבורי ב-GitHub + push (באישור המשתמש).
+**T5.4** - הגשה ב-Slack (המשתמש): קישור הריפו + המצגת. לפני כן: merge ל-PRs וחזרה אחת על המצגת.
 
 > **שינוי 2026-11-10:** ההגשה מחר בבוקר (11.11). עובדים על כל השלבים בשיחה אחת, branch + PR לכל שלב.
 > סדר: בסיס וריפו → ריצת בסיס → LLM → UI → README → מצגת → (אם נשאר זמן) Kaggle.
@@ -28,14 +28,14 @@
 | ID | משימה | ספק | סטטוס | בדיקה | תוצאה | שקף |
 |---|---|---|---|---|---|---|
 | T0.1 | כתיבת SPEC, PLAN ודף התקדמות | S1-S13 | verified | `build_progress.py` מייצר `progress.html` בלי שגיאה | 6 שלבים, 22 שורות, כל הסטטוסים מוצגים | - |
-| T0.2 | שלד מצגת: פתיח, בעיה, למה v4, ארכיטקטורה, מפת דרכים | S1, S7 | done | המשתמש פותח את המצגת ובודק שהעברית מימין לשמאל תקינה | פורסמו 6 שקפים. לא נבדק ויזואלית; בשקף 1 יש placeholder `[שם המציג]` | 1-6 |
+| T0.2 | שלד מצגת: פתיח, בעיה, הסיפור, ארכיטקטורה | S1, S7 | done | המשתמש פותח את המצגת ובודק שהעברית מימין לשמאל תקינה | פורסמו 6 שקפים. לא נבדק ויזואלית; בשקף 1 יש placeholder `[שם המציג]` | 1-6 |
 
 ## Phase 1 - בסיס הריפו · יעד 02.11
 | ID | משימה | ספק | סטטוס | בדיקה | תוצאה | שקף |
 |---|---|---|---|---|---|---|
-| T1.1 | העתקת קוד v4 ל-`next_call/` (בלי `__pycache__`), הרצת בדיקות בסיס | S11 | verified | `unittest` 6/6 + `smoke_test.py` עובר מהתיקייה החדשה | unittest 6/6 OK; `SMOKE TEST PASSED`. ריצה ראשונה נפלה פעם אחת על חסימת DLL של pyarrow (Application Control של Windows), ריצה חוזרת עברה | - |
+| T1.1 | העתקת קוד אב הטיפוס ל-`next_call/` (בלי `__pycache__`), הרצת בדיקות בסיס | S11 | verified | `unittest` 6/6 + `smoke_test.py` עובר מהתיקייה החדשה | unittest 6/6 OK; `SMOKE TEST PASSED`. ריצה ראשונה נפלה פעם אחת על חסימת DLL של pyarrow (Application Control של Windows), ריצה חוזרת עברה | - |
 | T1.2 | `git init`, סקירת `.gitignore`, commit ראשון ב-main | S11 | verified | `git status` נקי; אין `.env` / `*.db` ב-`git ls-files` | 37 קבצים ב-commit הראשון; אין `.env`, `*.db`, `data/raw`, `__pycache__`; נוסף `data/kaggle/` ל-`.gitignore` | - |
-| T1.3 | ריפו ציבורי ב-GitHub + push (באישור המשתמש) | S12 | verified | הקישור נפתח, README מוצג | https://github.com/ethanmuli-collab/next-call ציבורי, main עלה. ה-push הראשון נחסם כי ב-`.env.example` של v4 היה מפתח אמיתי; הקובץ הוחלף ב-`env.example` ריק וההיסטוריה המקומית נוקתה לפני ה-push | 15 |
+| T1.3 | ריפו ציבורי ב-GitHub + push (באישור המשתמש) | S12 | verified | הקישור נפתח, README מוצג | https://github.com/ethanmuli-collab/next-call ציבורי, main עלה. ה-push הראשון נחסם כי ב-`.env.example` של אב הטיפוס היה מפתח אמיתי; הקובץ הוחלף ב-`env.example` ריק וההיסטוריה המקומית נוקתה לפני ה-push | 15 |
 | T1.4 | ריצת בסיס מתועדת: Flow על export רגיל ועל v2 | S5.4, S7 | verified | רגיל: status=ok, 8 תוצרים · v2: gate_failed עם 4 בעיות | רגיל: status=ok, 8/8 תוצרים + call list 25, LR ROC-AUC 0.793 / PR-AUC 0.392, top 20% תופס 54% מול 22% בסדר הגעה · v2: gate_failed, 4 בעיות, exit code 1, אין תוצרי crew2. מצב offline | 9 |
 
 ## Phase 2 - נתונים אמיתיים (Kaggle) · יעד 05.11
@@ -52,8 +52,8 @@
 ## Phase 3 - מצב LLM · יעד 05.11
 | ID | משימה | ספק | סטטוס | בדיקה | תוצאה | שקף |
 |---|---|---|---|---|---|---|
-| T3.1 | ריצה עם `OPENAI_API_KEY` (המשתמש מכניס ל-`.env`) ותיקון תקלות | S10 | todo | `run_summary.json`: narratives = llm בשני הצוותים | | 12 |
-| T3.2 | השוואת LLM מול offline: המספרים זהים, רק הטקסט שונה | S10 | todo | diff של המדדים = 0 | | 12 |
+| T3.1 | ריצה עם `OPENAI_API_KEY` (המשתמש מכניס ל-`.env`) ותיקון תקלות | S10 | verified | `run_summary.json`: narratives = llm בשני הצוותים | ריצה עם gpt-4o-mini עברה בניסיון הראשון: status=ok, narratives crew1=llm, crew2=llm, openers=llm, 8/8 תוצרים. שופר ה-prompt של שורות הפתיחה. הריצה שמורה ב-`artifacts/leads_weekly_export_llm/` (נוסף `--run-dir`) | 8 |
+| T3.2 | השוואת LLM מול offline: המספרים זהים, רק הטקסט שונה | S10 | verified | diff של המדדים = 0 | `metrics` ב-`run_summary.json` זהים בין ריצת ה-LLM לריצת ה-offline (השוואת dict מלאה = True) | 8 |
 
 ## Phase 4 - אפליקציה ואוטומציה · יעד 07.11
 | ID | משימה | ספק | סטטוס | בדיקה | תוצאה | שקף |
@@ -66,8 +66,8 @@
 | ID | משימה | ספק | סטטוס | בדיקה | תוצאה | שקף |
 |---|---|---|---|---|---|---|
 | T5.1 | README לריפו: הרצה, ארכיטקטורה, מיפוי לתדריך | S12 | verified | clone נקי לתיקייה זמנית + הרצה לפי ה-README עובדת | clone מ-GitHub + venv חדש + `pip install -r requirements.txt`: `flow.py` status=ok עם 8 תוצרים (הנתונים נוצרו אוטומטית), v2 gate_failed exit 1, unittest 6/6, `SMOKE TEST PASSED` | - |
-| T5.2 | מעבר על קריטריוני הקבלה S12, אחד אחד | S12 | todo | כל ה-checkboxes ב-S12 מסומנים עם הוכחה | | 16 |
-| T5.3 | מצגת סופית + תסריט דמו + חזרה | S12 | todo | המשתמש מציג פעם אחת מתחילה ועד סוף | | הכל |
+| T5.2 | מעבר על קריטריוני הקבלה S12, אחד אחד | S12 | verified | כל ה-checkboxes ב-S12 מסומנים עם הוכחה | 5/5 מסומנים ב-SPEC S12 עם ההוכחה לכל אחד | 11 |
+| T5.3 | מצגת סופית + תסריט דמו + חזרה | S12 | done | המשתמש מציג פעם אחת מתחילה ועד סוף | המצגת הושלמה: 11 שקפים עם הערות דובר לכל שקף. חזרה של המשתמש עוד לא בוצעה | הכל |
 | T5.4 | הגשה ב-Slack: קישור GitHub + מצגת (המשתמש) | S12 | todo | ההודעה נשלחה | | - |
 
 ---
@@ -75,17 +75,18 @@
 ## יומן
 - 2026-11-01 · T0.1, T0.2 · נכתבו SPEC/PLAN/progress, נפתח שלד המצגת. החלטות: Kaggle + סינתטי, Slides, יחיד, שיחה לכל פיצ'ר.
 
-- 2026-11-10 · T1.1, T1.2 · קוד v4 הועתק ל-`next_call/`, בדיקות ירוקות, `git init` ו-commit ראשון. הוחלט: הכול בשיחה אחת, קודם מצב בטוח להגשה ואז Kaggle.
+- 2026-11-10 · T1.1, T1.2 · קוד אב הטיפוס הועתק ל-`next_call/`, בדיקות ירוקות, `git init` ו-commit ראשון. הוחלט: הכול בשיחה אחת, קודם מצב בטוח להגשה ואז Kaggle.
 - 2026-11-10 · T1.4 · ריצת בסיס על שני הקבצים, התוצרים נכנסו לריפו. `run_summary.json` שומר עכשיו נתיבים יחסיים לריפו.
 - 2026-11-10 · T1.3 · ריפו ציבורי + PR #1. מפתח OpenAI שהיה ב-`.env.example` הוסר לפני שעלה משהו לרשת.
 - 2026-11-10 · T4.1 · עיצוב מחדש של `app.py`: פס שלבים, כרטיסי KPI, מסך כישלון שער, כל 8 התוצרים, רשימת שיחות ככרטיסים, כפתור "Break it on purpose".
 - 2026-11-10 · T5.1 · README נכתב מחדש ונבדק ב-clone נקי עם סביבה וירטואלית חדשה.
+- 2026-11-10 · T3.1, T3.2 · ריצת LLM מלאה, מדדים זהים ל-offline. T5.2, T5.3 · קריטריוני הקבלה סומנו, המצגת הושלמה (11 שקפים).
+- 2026-11-10 · Phase 2 (Kaggle) ו-T4.2/T4.3 לא בוצעו בגלל הזמן; מוצגים במצגת כצעד הבא.
 
 ## קישורים
 - ריפו: https://github.com/ethanmuli-collab/next-call
 - מצגת (claude.ai Slides, פרטית): https://claude.ai/artifact/2QbU38a5EW65HyfuWbVwDY
   - לעריכה בשיחה חדשה: Artifact `read` על `project/deck.json` ועל `project/slides/<id>.html`, ואז publish לאותו url.
-  - שקפים: 1 cover · 2 brief · 3 story · 4 why-v4 · 5 architecture · 6 roadmap. שקפים 7+ נוספים לפי עמודת "שקף".
+  - שקפים (11): cover · brief · story · architecture · contract · run-ok · break · llm · app · repo · done.
   - טקסט עברי עם מילים באנגלית עטוף ב-`&#8235;...&#8236;` (RLE/PDF) כדי שהכיוון יהיה מימין לשמאל.
 - תדריך רשמי: `../../Final Project/final_project.html`
-- קוד מקור לפני העתקה: `../../versions/v4_next_call/`

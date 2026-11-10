@@ -43,9 +43,14 @@ def llm_openings(df: pd.DataFrame) -> list[str] | None:
         leads = [{"lead_id": r.lead_id, "first_name": r.first_name, "course": COURSE_HE.get(r.course_interest, ""),
                   "form_text": r.form_text, "why_now": r.reasons} for r in df.itertuples()]
         prompt = ("You write call openers for an admissions rep at an Israeli tech college. For each lead write "
-                  "exactly 2 short lines in natural spoken Hebrew: line 1 greets by first name and names the course; "
-                  "line 2 refers to what they wrote in the form and asks one open question. No promises about "
-                  "prices or discounts. Return JSON {\"openers\": [{\"lead_id\": ..., \"text\": \"line1\\nline2\"}]}.\n"
+                  "exactly 2 full sentences in warm, natural spoken Hebrew, as the rep would say them on the phone. "
+                  "Sentence 1 greets by first name, says the rep is calling from the college and names the course "
+                  "they left details for. Sentence 2 quotes or paraphrases the specific thing they wrote in the form "
+                  "(form_text) and ends with one open question about it; if form_text is empty use why_now. "
+                  "Use the neutral form 'את/ה'. No promises about prices or discounts. Example:\n"
+                  "היי דנה, מדבר/ת מהמכללה, ראיתי שהשארת פרטים על קורס סייבר.\n"
+                  "כתבת שאת/ה מחפש/ת לימודי ערב - מה חשוב לך שיהיה במסלול כדי שיסתדר עם העבודה?\n"
+                  "Return JSON {\"openers\": [{\"lead_id\": ..., \"text\": \"sentence1\\nsentence2\"}]}.\n"
                   + json.dumps(leads, ensure_ascii=False))
         resp = OpenAI(timeout=60).chat.completions.create(
             model=LLM_MODEL, temperature=0.3, response_format={"type": "json_object"},

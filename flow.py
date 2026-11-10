@@ -248,9 +248,10 @@ def main() -> None:
     ap.add_argument("--offline", action="store_true", help="force offline mode (no LLM)")
     ap.add_argument("--feedback", action="store_true", help="use rep-recorded outcomes as extra labels")
     ap.add_argument("--from-handoff", action="store_true", help="skip Crew 1; re-validate existing clean data")
+    ap.add_argument("--run-dir", help="where to write the artifacts (default: artifacts/<input file name>)")
     a = ap.parse_args()
     state = run_pipeline(Path(a.input), offline=True if a.offline else None, use_feedback=a.feedback,
-                         from_handoff=a.from_handoff)
+                         from_handoff=a.from_handoff, run_dir=Path(a.run_dir).resolve() if a.run_dir else None)
     print("\n" + "=" * 70 + f"\nSTATUS: {state['status']}\n{state['message']}")
     sys.exit(0 if state["status"] == "ok" else 1)
 
