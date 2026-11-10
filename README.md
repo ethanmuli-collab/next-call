@@ -26,6 +26,8 @@ A Flask API (`server.py`) with a plain HTML/CSS/JS front end (`web/`), in Hebrew
 - **Today's calls** - the ranked list, why each lead is on it, an opening line to copy, one click to mark what happened.
 - **Lead source** - the morning sync ("sync now" runs it by hand), or drop a CSV / pick a sample. The four stages run
   live, and you get a list or a plain explanation of why the file was stopped.
+- **Website lead form** (`/#/form`) - what a prospect fills in on the college's site. The lead joins the call list at
+  the next sync, ranked with everyone else, with an opening line based on what they wrote.
 - **Behind the scenes** - every run with its 8 artifacts, the model comparison, the Flow log, and a one-click
   "change a unit" test that makes the gate refuse the handoff.
 
@@ -36,6 +38,12 @@ to another. That crossing is where things break silently (a CRM upgrade renames 
 exactly the failure the brief describes. So the layer is separate, and it has a contract and a gate at its entrance.
 In this version the source is the CRM's export file and the morning automation is the n8n workflow in `n8n/`
 (defined, not run end to end here); a direct CRM API connector is the next step.
+
+## Deploy
+
+`Dockerfile` runs the web app with gunicorn on port 7860 (one worker: the state of the running Flow is in memory).
+Without `OPENAI_API_KEY` it runs in offline mode, which is how a public demo should run.
+`deploy/huggingface/` holds the two files of a Hugging Face Space that builds straight from this repo.
 
 ## How it works
 
@@ -109,7 +117,7 @@ Other commands:
 ```bash
 python flow.py --from-handoff            # skip Crew 1, re-validate the existing clean_data.csv, then model
 python flow.py --run-dir artifacts/my_run  # write the artifacts somewhere else
-python -m unittest -v                    # 15 unit tests: the contract gate (both profiles) and the web API
+python -m unittest -v                    # 16 unit tests: the contract gate (both profiles) and the web API
 streamlit run app.py                     # the same Flow in a Streamlit console (English)
 python smoke_test.py                     # end to end, offline, outbound network blocked
 python webhook.py                        # Flask: http://127.0.0.1:5055/call-list?top=20

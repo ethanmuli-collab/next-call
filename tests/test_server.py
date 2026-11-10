@@ -28,6 +28,12 @@ class ServerApiTest(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertTrue(res.get_data(as_text=True).lstrip("\ufeff").startswith("lead_id,outcome,note,marked_at"))
 
+    def test_form_lead_is_validated(self):
+        bad = {"first_name": "", "course_interest": "cyber", "source": "referral", "region": "center"}
+        self.assertEqual(self.client.post("/api/lead", json=bad).status_code, 400)
+        bad = {"first_name": "Dana", "course_interest": "cooking", "source": "referral", "region": "center"}
+        self.assertEqual(self.client.post("/api/lead", json=bad).status_code, 400)
+
     def test_unknown_run_or_file_is_404(self):
         self.assertEqual(self.client.get("/api/runs/..%2F..").status_code, 404)
         self.assertEqual(self.client.get("/api/runs/no_such_run").status_code, 404)

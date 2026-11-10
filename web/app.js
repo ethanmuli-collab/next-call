@@ -25,9 +25,10 @@ function toast(msg) {
 /* ---------- labels ---------- */
 const COURSES = { ux_ui: 'UX/UI', ai_developers: 'מפתחי AI', cyber: 'סייבר', fullstack: 'Full Stack', data_analyst: 'דאטה אנליסט', qa_automation: 'QA אוטומציה' };
 const SOURCES = { organic_site: 'האתר', referral: 'חבר מביא חבר', facebook_form: 'פייסבוק', webinar: 'וובינר', google_ads: 'גוגל' };
+const REGIONS = { tel_aviv: 'תל אביב', center: 'מרכז', sharon: 'השרון', jerusalem: 'ירושלים', haifa_north: 'חיפה והצפון', south: 'דרום' };
 const OUTCOMES = [['enrolled', 'נרשם/ה', ''], ['call_back', 'לחזור אליו/ה', 'wait'], ['no_answer', 'אין מענה', 'wait'], ['not_interested', 'לא מעוניין/ת', 'no']];
 const REASONS = [
-  [/^new lead \((\d+)h old\)$/, (m) => `ליד חדש, לפני ${m[1]} שעות`],
+  [/^new lead \((\d+)h old\)$/, (m) => (m[1] === '0' ? 'ליד חדש, נכנס עכשיו' : `ליד חדש, לפני ${m[1]} שעות`)],
   [/^asked when the next cohort starts$/, () => 'שאל/ה מתי המחזור הבא'],
   [/^attended a webinar$/, () => 'השתתף/ה בוובינר'],
   [/^referred by a friend$/, () => 'הגיע/ה מהמלצה של חבר'],
@@ -175,12 +176,15 @@ async function viewToday() {
   const draw = () => {
     const done = c.leads.filter((l) => l.outcome).length;
     const rows = c.leads.filter((l) => filter === 'all' || (filter === 'open') === !l.outcome);
+    const onList = c.leads.filter((l) => String(l.lead_id).startsWith('W')).length;
+    const formNote = c.form_leads > onList ? `<p class="muted" style="margin-bottom:14px">${onList} מתוך ${c.form_leads} לידים מהטופס ברשימה. השאר דורגו מתחת ל-${c.leads.length} הראשונים, או שעוד לא בוצע סנכרון.</p>` : '';
     view.innerHTML = `
     <div class="page-head">
       <div><h1>${c.leads.length} שיחות להיום</h1><p>מדורגות לפי הסיכוי להירשם ולפי כמה הליד טרי. מתחילים מלמעלה.</p></div>
       <div class="progress"><strong>${done} מתוך ${c.leads.length} טופלו</strong><div class="bar"><i style="width:${(done / c.leads.length) * 100}%"></i></div>
         <a class="btn small" style="margin-top:12px" href="/api/outcomes.csv">הורדת התוצאות ל-CRM</a></div>
     </div>
+    ${formNote}
     <div class="chips" role="tablist">
       ${[['all', 'הכול'], ['open', 'ממתינים לשיחה'], ['done', 'טופלו']].map(([k, t]) => `<button class="chip${filter === k ? ' on' : ''}" data-filter="${k}" type="button">${t}</button>`).join('')}
     </div>
@@ -215,7 +219,7 @@ function leadHtml(l) {
   return `<article class="card lead-card${l.outcome ? ' done' : ''}">
     <div class="rank">${l.rank}</div>
     <div>
-      <div class="lead-name">${esc(l.first_name)}${oc ? `<span class="tag ${oc[2]}">${oc[1]}</span>` : ''}</div>
+      <div class="lead-name">${esc(l.first_name)}${String(l.lead_id).startsWith('W') ? '<span class="tag new">חדש מהטופס</span>' : ''}${oc ? `<span class="tag ${oc[2]}">${oc[1]}</span>` : ''}</div>
       <div class="lead-meta">${esc(COURSES[l.course_interest] || l.course_interest)} · הגיע/ה דרך ${esc(SOURCES[l.source] || l.source)} · לפני ${age(l.age_hours)} · <span dir="ltr">${esc(l.lead_id)}</span></div>
       <div class="why">${l.reasons.split('; ').map((r) => `<span>${esc(reason(r))}</span>`).join('')}</div>
       <div class="opener"><button class="copy" data-copy="${esc(l.lead_id)}" type="button">העתקה</button>
@@ -246,6 +250,13 @@ async function viewImport() {
         <p class="muted note">בגרסה הזו המקור הוא תיקיית היצוא של ה-CRM (<code>data/raw</code>) והאוטומציה היא <code>n8n/morning_call_list.json</code>. מחבר API ל-CRM מסוים הוא הצעד הבא.</p></div>
       <div class="sync-side"><span class="tag ${last === 'ok' ? '' : last ? 'no' : 'wait'}">${last === 'ok' ? 'הריצה האחרונה עברה' : last ? 'הריצה האחרונה נעצרה' : 'עוד לא רץ'}</span>
         <button class="btn primary" id="sync" type="button">סנכרון עכשיו</button></div>
+    </div>
+    <div class="card sync form-src">
+      <div><h2>טופס השארת הפרטים באתר</h2>
+        <p>לידים שממלאים את הטופס באתר המכללה מצטרפים לרשימה בסנכרון הבא, יחד עם היצוא מה-CRM.</p></div>
+      <div class="sync-side"><span class="tag ${ov.form_leads ? 'new' : 'wait'}">${ov.form_leads ? ov.form_leads + ' לידים מהטופס' : 'אין לידים מהטופס'}</span>
+        <a class="btn" href="#/form">פתיחת הטופס</a>
+        ${ov.form_leads ? '<button class="linkish" id="reset-form" type="button">ניקוי לידי הטופס</button>' : ''}</div>
     </div>
     <h2 class="section-title">העלאה ידנית של קובץ</h2>
     <label class="drop" id="drop"><input type="file" id="file" accept=".csv" hidden>
@@ -286,13 +297,53 @@ async function viewImport() {
   view.onclick = (ev) => {
     const p = ev.target.closest('[data-pick]');
     if (p) { picked = p.dataset.pick; chooser(); return; }
-    if (ev.target.id === 'sync') { run('weekly', 'סנכרון מיצוא ה-CRM', false, true); return; }
+    if (ev.target.id === 'sync') { run('weekly', 'סנכרון מיצוא ה-CRM ומהטופס באתר', false, true); return; }
+    if (ev.target.id === 'reset-form') { api('/api/lead', { method: 'DELETE' }).then(() => { toast('לידי הטופס נוקו'); viewImport(); }); return; }
     if (ev.target.id === 'go' && picked) {
       const s = ov.sources.find((x) => x.key === picked);
       run(picked, (SAMPLES[picked] || [s.file])[0]);
     }
   };
   chooser();
+}
+
+/* ---------- website lead form (what a prospect sees on the college's site) ---------- */
+async function viewForm() {
+  const ov = await api('/api/overview');
+  const opts = (keys, labels) => keys.map((k) => `<option value="${esc(k)}">${esc(labels[k] || k)}</option>`).join('');
+  view.innerHTML = `
+  <div class="form-page">
+    <div class="card form-card">
+      <p class="eyebrow">מכללת הייטק · לימודי תעודה</p>
+      <h1>רוצים לשמוע עוד? השאירו פרטים</h1>
+      <p class="muted">נציג/ת רישום יחזור אליכם בהקדם.</p>
+      <form id="lead-form" novalidate>
+        <label>שם פרטי<input name="first_name" maxlength="40" required autocomplete="given-name"></label>
+        <label>הקורס שמעניין אותך<select name="course_interest">${opts(ov.courses, COURSES)}</select></label>
+        <div class="row2">
+          <label>אזור מגורים<select name="region">${opts(ov.regions, REGIONS)}</select></label>
+          <label>איך הגעת אלינו?<select name="source">${opts(ov.lead_sources, SOURCES)}</select></label>
+        </div>
+        <label>מה חשוב לך לדעת?<textarea name="form_text" maxlength="300" rows="3" placeholder="למשל: מתי נפתח המחזור הבא? כמה עולה הקורס?"></textarea></label>
+        <p class="form-err" id="form-err" role="alert"></p>
+        <button class="btn primary" type="submit">שליחה</button>
+      </form>
+    </div>
+    <p class="muted form-note">זה הטופס כפי שמתעניין רואה אותו באתר המכללה. ליד שנשלח כאן נכנס לרשימת השיחות בסנכרון הבא.</p>
+  </div>`;
+  document.getElementById('lead-form').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const data = Object.fromEntries(new FormData(ev.target).entries());
+    const err = document.getElementById('form-err');
+    if (!data.first_name.trim()) { err.textContent = 'צריך למלא שם פרטי.'; return; }
+    try {
+      await post('/api/lead', data);
+      view.innerHTML = `<div class="form-page"><div class="card empty"><h2>תודה ${esc(data.first_name.trim())}, קיבלנו</h2>
+        <p>הפרטים נשמרו. נציג/ת רישום יחזור אליך בהקדם.</p>
+        <div class="cta" style="justify-content:center"><a class="btn primary" href="#/import">למקור הלידים ולסנכרון</a><button class="btn" id="another" type="button">ליד נוסף</button></div></div></div>`;
+      document.getElementById('another').onclick = () => viewForm();
+    } catch (e) { err.textContent = 'השליחה נכשלה: ' + e.message; }
+  };
 }
 
 /* ---------- system ---------- */
@@ -409,6 +460,7 @@ async function route() {
     if (page === 'today') await viewToday();
     else if (page === 'import') await viewImport();
     else if (page === 'system') await viewSystem(arg);
+    else if (page === 'form') await viewForm();
     else await viewHome();
   } catch (e) {
     view.innerHTML = `<div class="card empty"><h2>משהו השתבש</h2><p class="ltr">${esc(e.message)}</p><button class="btn" type="button" onclick="location.reload()">ניסיון נוסף</button></div>`;

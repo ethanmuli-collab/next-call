@@ -16,6 +16,7 @@ from pathlib import Path
 import pandas as pd
 from flask import Response, jsonify, request, send_from_directory
 
+from contract.spec import COURSES, REGIONS, SOURCES
 from config import (ARTIFACTS_DIR, BROKEN_EXPORT, CLEAN_EXPORT, CREW1_FILES, CREW2_FILES, DATA_DIR, KAGGLE_EXPORT,
                     ROOT, is_offline, run_dir_for)
 from feedback import OUTCOMES, clear_outcome, list_outcomes, record_outcome
@@ -23,6 +24,12 @@ from webhook import _run_dir, app
 
 WEB_DIR = ROOT / "web"
 UPLOAD_DIR = DATA_DIR / "uploads"
+INBOX = DATA_DIR / "inbox" / "web_form_leads.csv"       # leads left on the website form, waiting for the next sync
+SYNC_INPUT = DATA_DIR / "inbox" / "crm_export_with_form_leads.csv"
+RAW_COLS = ["lead_id", "created_at", "first_name", "source", "campaign", "course_interest", "age_band", "region",
+            "webinar_attended", "pages_viewed", "response_time_min", "n_contacts", "form_text", "converted"]
+INBOX_LIMIT = 200
+INBOX_LOCK = threading.Lock()
 UNIT_COL = {"synthetic": "response_time_min", "kaggle": "time_on_site_sec"}
 FILES = ({f: f"crew1/{f}" for f in CREW1_FILES} | {f: f"crew2/{f}" for f in CREW2_FILES}
          | {f: f for f in ("gate_report.json", "run_summary.json", "flow.log")})
@@ -59,6 +66,27 @@ def _sources() -> dict[str, dict]:
         for p in sorted(UPLOAD_DIR.glob("upload_*.csv")):
             src[p.stem] = {"dataset": _profile(p), "path": p, "run_dir": run_dir_for(p), "upload": True}
     return src
+
+
+def _inbox() -> pd.DataFrame:
+    return pd.read_csv(INBOX, encoding="utf-8", dtype=str) if INBOX.exists() else pd.DataFrame(columns=RAW_COLS)
+
+
+def _sync_input() -> Path:
+    """The CRM export plus the leads left on the website form since the export was taken."""
+    from data.generate_data import ensure_data
+
+    ensure_data()
+    new = _inbox()
+    if new.empty:
+        return CLEAN_EXPORT
+    export = pd.read_csv(CLEAN_EXPORT, encoding="utf-8", dtype=str)
+    # the dataset's clock is its newest timestamp, so form leads are stamped right after it, a minute apart
+    last = pd.to_datetime(export["created_at"]).max()
+    new["created_at"] = [(last + pd.Timedelta(minutes=i + 1)).strftime("%Y-%m-%d %H:%M") for i in range(len(new))]
+    SYNC_INPUT.parent.mkdir(parents=True, exist_ok=True)
+    pd.concat([export, new[RAW_COLS]], ignore_index=True).to_csv(SYNC_INPUT, index=False, encoding="utf-8")
+    return SYNC_INPUT
 
 
 def _stages(rd: Path, summary: dict, running: bool) -> list[dict]:
@@ -121,7 +149,8 @@ def _start(key: str, retrain: bool = False, break_unit: bool = False):
                 df = pd.read_csv(clean, encoding="utf-8")
                 df[col] = df[col] / 60
                 df.to_csv(clean, index=False, encoding="utf-8")
-            state = run_pipeline(src["path"], use_feedback=retrain, from_handoff=break_unit, run_dir=rd,
+            path = _sync_input() if key == "weekly" and not break_unit else src["path"]
+            state = run_pipeline(path, use_feedback=retrain, from_handoff=break_unit, run_dir=rd,
                                  dataset=src["dataset"])
             if state["status"] == "ok" and state["call_list_rows"]:
                 ACTIVE["run"] = rd.name
@@ -151,7 +180,8 @@ def assets(name: str):
 def overview():
     sources = [{"key": k, "dataset": s["dataset"], "file": s["path"].name, "upload": s.get("upload", False),
                 "status": _json(s["run_dir"] / "run_summary.json").get("status")} for k, s in _sources().items()]
-    return jsonify(mode="offline" if is_offline() else "llm", sources=sources, job=JOB["state"], active=ACTIVE["run"])
+    return jsonify(mode="offline" if is_offline() else "llm", sources=sources, job=JOB["state"], active=ACTIVE["run"],
+                   form_leads=len(_inbox()), courses=COURSES, lead_sources=SOURCES, regions=REGIONS)
 
 
 @app.post("/api/run")
@@ -172,6 +202,36 @@ def api_job():
     if job["state"] != "idle":
         job["detail"] = _detail(ARTIFACTS_DIR / job["run"], running=job["state"] == "running")
     return jsonify(job)
+
+
+@app.post("/api/lead")
+def api_lead():
+    """A lead left on the website form. It joins the call list at the next sync."""
+    body = request.get_json(silent=True) or {}
+    clean = lambda v, n: re.sub(r"[\x00-\x1f\x7f]+", " ", str(v or "")).strip()[:n]  # noqa: E731
+    name, text = clean(body.get("first_name"), 40), clean(body.get("form_text"), 300)
+    course, source, region = body.get("course_interest"), body.get("source"), body.get("region")
+    if not name or course not in COURSES or source not in SOURCES or region not in REGIONS:
+        return jsonify(error="name, course, source and region are required"), 400
+    with INBOX_LOCK:
+        rows = _inbox()
+        if len(rows) >= INBOX_LIMIT:
+            return jsonify(error="the form inbox is full - sync first"), 429
+        lead_id = f"W{100001 + len(rows)}"
+        rows.loc[len(rows)] = {"lead_id": lead_id, "first_name": name, "source": source, "campaign": "web_form",
+                               "course_interest": course, "region": region, "webinar_attended": "0",
+                               "n_contacts": "0", "form_text": text}
+        INBOX.parent.mkdir(parents=True, exist_ok=True)
+        rows.to_csv(INBOX, index=False, encoding="utf-8")
+    return jsonify(ok=True, lead_id=lead_id, waiting=len(rows))
+
+
+@app.delete("/api/lead")
+def api_lead_reset():
+    """Empty the form inbox (start a demo from scratch)."""
+    with INBOX_LOCK:
+        INBOX.unlink(missing_ok=True)
+    return jsonify(ok=True)
 
 
 @app.post("/api/upload")
@@ -199,7 +259,7 @@ def api_calls():
     return jsonify(run=rd.name, status=summary.get("status"), leads=leads, rows=_detail(rd)["rows"],
                    capture=res.get(m.get("selected_model"), {}).get("capture_at_20pct"),
                    baseline=res.get("baseline_arrival_order", {}).get("capture_at_20pct"),
-                   checks=summary.get("gate", {}).get("checks_run"))
+                   checks=summary.get("gate", {}).get("checks_run"), form_leads=len(_inbox()))
 
 
 @app.post("/api/outcome")
@@ -256,4 +316,4 @@ def api_run_file(name: str, fname: str):
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=int(os.getenv("NEXT_CALL_PORT", "8000")), threaded=True)
+    app.run(host=os.getenv("NEXT_CALL_HOST", "127.0.0.1"), port=int(os.getenv("NEXT_CALL_PORT", "8000")), threaded=True)

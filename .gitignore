@@ -26,3 +26,4 @@ artifacts/kaggle_lead_scoring/crew2/features.csv
 # files uploaded through the web app, and their runs
 data/uploads/
 artifacts/upload_*/
+data/inbox/
