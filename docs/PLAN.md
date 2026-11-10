@@ -36,7 +36,7 @@
 | T1.1 | העתקת קוד v4 ל-`next_call/` (בלי `__pycache__`), הרצת בדיקות בסיס | S11 | verified | `unittest` 6/6 + `smoke_test.py` עובר מהתיקייה החדשה | unittest 6/6 OK; `SMOKE TEST PASSED`. ריצה ראשונה נפלה פעם אחת על חסימת DLL של pyarrow (Application Control של Windows), ריצה חוזרת עברה | - |
 | T1.2 | `git init`, סקירת `.gitignore`, commit ראשון ב-main | S11 | verified | `git status` נקי; אין `.env` / `*.db` ב-`git ls-files` | 37 קבצים ב-commit הראשון; אין `.env`, `*.db`, `data/raw`, `__pycache__`; נוסף `data/kaggle/` ל-`.gitignore` | - |
 | T1.3 | ריפו ציבורי ב-GitHub + push (באישור המשתמש) | S12 | todo | הקישור נפתח, README מוצג | | 15 |
-| T1.4 | ריצת בסיס מתועדת: Flow על export רגיל ועל v2 | S5.4, S7 | todo | רגיל: status=ok, 8 תוצרים · v2: gate_failed עם 4 בעיות | | 9 |
+| T1.4 | ריצת בסיס מתועדת: Flow על export רגיל ועל v2 | S5.4, S7 | verified | רגיל: status=ok, 8 תוצרים · v2: gate_failed עם 4 בעיות | רגיל: status=ok, 8/8 תוצרים + call list 25, LR ROC-AUC 0.793 / PR-AUC 0.392, top 20% תופס 54% מול 22% בסדר הגעה · v2: gate_failed, 4 בעיות, exit code 1, אין תוצרי crew2. מצב offline | 9 |
 
 ## Phase 2 - נתונים אמיתיים (Kaggle) · יעד 05.11
 | ID | משימה | ספק | סטטוס | בדיקה | תוצאה | שקף |
@@ -76,6 +76,7 @@
 - 2026-11-01 · T0.1, T0.2 · נכתבו SPEC/PLAN/progress, נפתח שלד המצגת. החלטות: Kaggle + סינתטי, Slides, יחיד, שיחה לכל פיצ'ר.
 
 - 2026-11-10 · T1.1, T1.2 · קוד v4 הועתק ל-`next_call/`, בדיקות ירוקות, `git init` ו-commit ראשון. הוחלט: הכול בשיחה אחת, קודם מצב בטוח להגשה ואז Kaggle.
+- 2026-11-10 · T1.4 · ריצת בסיס על שני הקבצים, התוצרים נכנסו לריפו. `run_summary.json` שומר עכשיו נתיבים יחסיים לריפו.
 
 ## קישורים
 - מצגת (claude.ai Slides, פרטית): https://claude.ai/artifact/2QbU38a5EW65HyfuWbVwDY
