@@ -23,3 +23,6 @@ data/kaggle/
 # row-level outputs of the kaggle profile (dataset licence is not stated, so rows stay local)
 artifacts/kaggle_lead_scoring/crew1/clean_data.csv
 artifacts/kaggle_lead_scoring/crew2/features.csv
+# files uploaded through the web app, and their runs
+data/uploads/
+artifacts/upload_*/
