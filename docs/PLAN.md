@@ -67,7 +67,7 @@
 |---|---|---|---|---|---|---|
 | T5.1 | README לריפו: הרצה, ארכיטקטורה, מיפוי לתדריך | S12 | verified | clone נקי לתיקייה זמנית + הרצה לפי ה-README עובדת | clone מ-GitHub + venv חדש + `pip install -r requirements.txt`: `flow.py` status=ok עם 8 תוצרים (הנתונים נוצרו אוטומטית), v2 gate_failed exit 1, unittest 6/6, `SMOKE TEST PASSED` | - |
 | T5.2 | מעבר על קריטריוני הקבלה S12, אחד אחד | S12 | verified | כל ה-checkboxes ב-S12 מסומנים עם הוכחה | 5/5 מסומנים ב-SPEC S12 עם ההוכחה לכל אחד | 11 |
-| T5.3 | מצגת סופית + תסריט דמו + חזרה | S12 | done | המשתמש מציג פעם אחת מתחילה ועד סוף | המצגת הושלמה: 11 שקפים עם הערות דובר לכל שקף. חזרה של המשתמש עוד לא בוצעה | הכל |
+| T5.3 | מצגת סופית + תסריט דמו + חזרה | S12 | done | המשתמש מציג פעם אחת מתחילה ועד סוף | המצגת הושלמה: 12 שקפים עם הערות דובר לכל שקף. חזרה של המשתמש עוד לא בוצעה | הכל |
 | T5.4 | הגשה ב-Slack: קישור GitHub + מצגת (המשתמש) | S12 | todo | ההודעה נשלחה | | - |
 
 ---
@@ -87,6 +87,6 @@
 - ריפו: https://github.com/ethanmuli-collab/next-call
 - מצגת (claude.ai Slides, פרטית): https://claude.ai/artifact/2QbU38a5EW65HyfuWbVwDY
   - לעריכה בשיחה חדשה: Artifact `read` על `project/deck.json` ועל `project/slides/<id>.html`, ואז publish לאותו url.
-  - שקפים (11): cover · brief · story · architecture · contract · run-ok · break · llm · app · repo · done.
+  - שקפים (12): cover · brief · story · architecture · contract · run-ok · kaggle · break · llm · app · repo · done.
   - טקסט עברי עם מילים באנגלית עטוף ב-`&#8235;...&#8236;` (RLE/PDF) כדי שהכיוון יהיה מימין לשמאל.
 - תדריך רשמי: `../../Final Project/final_project.html`
