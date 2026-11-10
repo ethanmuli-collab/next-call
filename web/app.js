@@ -136,10 +136,10 @@ async function viewHome() {
   view.innerHTML = `
   <section class="hero">
     <div>
-      <p class="eyebrow">למוקדי רישום של מכללות וקורסים</p>
+      <p class="eyebrow">שכבת תעדוף מעל ה-CRM של מוקד הרישום</p>
       <h1>למי מתקשרים עכשיו?</h1>
-      <p class="lead">מעלים את קובץ הלידים מה-CRM, ומקבלים רשימת שיחות מדורגת לפי הסיכוי להירשם, עם משפט פתיחה לכל ליד.</p>
-      <div class="cta"><a class="btn primary" href="#/today">לרשימת השיחות של היום</a><a class="btn" href="#/import">העלאת קובץ לידים</a></div>
+      <p class="lead">ה-CRM שומר את הלידים. Next Call אומר למי להתקשר קודם ומה להגיד: רשימה מדורגת לפי הסיכוי להירשם, שמתעדכנת כל בוקר.</p>
+      <div class="cta"><a class="btn primary" href="#/today">לרשימת השיחות של היום</a><a class="btn" href="#/import">מקור הלידים</a></div>
     </div>
     <div class="preview" aria-label="תצוגה מקדימה של הרשימה">
       <div class="preview-head"><span>השיחות של היום</span><span>${c.leads.length ? c.leads.length + ' לידים' : ''}</span></div>
@@ -148,10 +148,10 @@ async function viewHome() {
   </section>
   <h2 class="section-title">איך זה עובד</h2>
   <section class="how">
-    <div class="card"><div class="n">01</div><h3>מעלים</h3><p>גוררים את קובץ ה-CSV השבועי מה-CRM.</p></div>
+    <div class="card"><div class="n">01</div><h3>מתחברים</h3><p>הלידים נמשכים כל בוקר מיצוא ה-CRM. אפשר גם להעלות קובץ ידנית.</p></div>
     <div class="card"><div class="n">02</div><h3>בודקים</h3><p>הקובץ מנוקה ונבדק מול חוזה נתונים. קובץ שגוי נעצר כאן.</p></div>
     <div class="card"><div class="n">03</div><h3>מדרגים</h3><p>מודל מדרג כל ליד פתוח לפי הסיכוי להירשם ולפי כמה הוא טרי.</p></div>
-    <div class="card"><div class="n">04</div><h3>מתקשרים</h3><p>עוברים על הרשימה מלמעלה ומסמנים מה קרה בכל שיחה.</p></div>
+    <div class="card"><div class="n">04</div><h3>מתקשרים</h3><p>עוברים על הרשימה מלמעלה ומסמנים מה קרה. התוצאות חוזרות ל-CRM.</p></div>
   </section>
   ${c.capture ? `<h2 class="section-title">מה זה נותן</h2>
   <section class="proof">
@@ -178,7 +178,8 @@ async function viewToday() {
     view.innerHTML = `
     <div class="page-head">
       <div><h1>${c.leads.length} שיחות להיום</h1><p>מדורגות לפי הסיכוי להירשם ולפי כמה הליד טרי. מתחילים מלמעלה.</p></div>
-      <div class="progress"><strong>${done} מתוך ${c.leads.length} טופלו</strong><div class="bar"><i style="width:${(done / c.leads.length) * 100}%"></i></div></div>
+      <div class="progress"><strong>${done} מתוך ${c.leads.length} טופלו</strong><div class="bar"><i style="width:${(done / c.leads.length) * 100}%"></i></div>
+        <a class="btn small" style="margin-top:12px" href="/api/outcomes.csv">הורדת התוצאות ל-CRM</a></div>
     </div>
     <div class="chips" role="tablist">
       ${[['all', 'הכול'], ['open', 'ממתינים לשיחה'], ['done', 'טופלו']].map(([k, t]) => `<button class="chip${filter === k ? ' on' : ''}" data-filter="${k}" type="button">${t}</button>`).join('')}
@@ -231,13 +232,22 @@ function leadHtml(l) {
 async function viewImport() {
   const ov = await api('/api/overview');
   let picked = null;
+  const last = (ov.sources.find((s) => s.key === 'weekly') || {}).status;
   const chooser = () => {
     const cards = ov.sources.map((s) => {
       const [t, d] = SAMPLES[s.key] || [s.file.replace(/^upload_/, ''), 'קובץ שהועלה מהמחשב.'];
       return `<button class="card sample${picked === s.key ? ' on' : ''}" data-pick="${esc(s.key)}" type="button"><h3>${esc(t)}</h3><p>${esc(d)}</p><div class="f">${esc(s.file)}</div></button>`;
     }).join('');
     view.innerHTML = `
-    <div class="page-head"><div><h1>קובץ לידים חדש</h1><p>מעלים את היצוא מה-CRM. הקובץ נבדק, המודל מתאמן, והרשימה של היום מתעדכנת.</p></div></div>
+    <div class="page-head"><div><h1>מקור הלידים</h1><p>מאיפה הלידים מגיעים לרשימה. כל קובץ נבדק מול חוזה הנתונים לפני שמודל רואה אותו.</p></div></div>
+    <div class="card sync">
+      <div><p class="eyebrow">ברירת המחדל</p><h2>סנכרון אוטומטי כל בוקר</h2>
+        <p>בימים א-ה ב-07:30 אוטומציה מריצה את הבדיקה והדירוג על היצוא העדכני מה-CRM, לומדת מתוצאות השיחות שסומנו, ושולחת את הרשימה לנציגים. אם הקובץ נעצר בשער, מנהל/ת המוקד מקבל/ת התראה במקום רשימה.</p>
+        <p class="muted note">בגרסה הזו המקור הוא תיקיית היצוא של ה-CRM (<code>data/raw</code>) והאוטומציה היא <code>n8n/morning_call_list.json</code>. מחבר API ל-CRM מסוים הוא הצעד הבא.</p></div>
+      <div class="sync-side"><span class="tag ${last === 'ok' ? '' : last ? 'no' : 'wait'}">${last === 'ok' ? 'הריצה האחרונה עברה' : last ? 'הריצה האחרונה נעצרה' : 'עוד לא רץ'}</span>
+        <button class="btn primary" id="sync" type="button">סנכרון עכשיו</button></div>
+    </div>
+    <h2 class="section-title">העלאה ידנית של קובץ</h2>
     <label class="drop" id="drop"><input type="file" id="file" accept=".csv" hidden>
       <h3>גוררים לכאן קובץ CSV, או לוחצים לבחירה</h3><p class="muted">יצוא לידים מה-CRM, עד 30MB</p></label>
     <h2 class="section-title">או מתחילים מקובץ לדוגמה</h2>
@@ -258,15 +268,15 @@ async function viewImport() {
     drop.ondragleave = () => drop.classList.remove('over');
     drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove('over'); send(e.dataTransfer.files[0]); };
   };
-  const run = async (key, label, attach) => {
-    const retrain = document.getElementById('retrain')?.checked || false;
+  const run = async (key, label, attach, learn) => {
+    const retrain = learn || document.getElementById('retrain')?.checked || false;
     view.onclick = null;
     view.innerHTML = `<div class="page-head"><div><h1>בודקים ומדרגים</h1><p>${esc(label)}</p></div></div>
       <div id="stages">${stagesHtml(Object.keys(STAGES).map((k) => ({ key: k, state: 'wait' })))}</div><div id="result"></div>`;
     try {
       const job = await watchRun(document.getElementById('stages'), attach ? null : '/api/run', { source: key, retrain });
       document.getElementById('result').innerHTML = resultHtml(job.detail, job.error) +
-        `<div class="runbar"><a class="btn" href="#/system/${esc(job.detail.name)}">מה קרה מאחורי הקלעים</a><button class="btn" id="again" type="button">קובץ אחר</button></div>`;
+        `<div class="runbar"><a class="btn" href="#/system/${esc(job.detail.name)}">מה קרה מאחורי הקלעים</a><button class="btn" id="again" type="button">חזרה למקור הלידים</button></div>`;
       document.getElementById('again').onclick = () => viewImport();
     } catch (e) {
       document.getElementById('result').innerHTML = `<div class="banner fail"><div><h2>הריצה לא התחילה</h2><p class="ltr">${esc(e.message)}</p></div></div>`;
@@ -276,6 +286,7 @@ async function viewImport() {
   view.onclick = (ev) => {
     const p = ev.target.closest('[data-pick]');
     if (p) { picked = p.dataset.pick; chooser(); return; }
+    if (ev.target.id === 'sync') { run('weekly', 'סנכרון מיצוא ה-CRM', false, true); return; }
     if (ev.target.id === 'go' && picked) {
       const s = ov.sources.find((x) => x.key === picked);
       run(picked, (SAMPLES[picked] || [s.file])[0]);
