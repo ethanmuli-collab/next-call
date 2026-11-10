@@ -1,4 +1,5 @@
 {
+  "dataset": "synthetic",
   "input_path": "data/raw/leads_weekly_export_v2.csv",
   "run_dir": "artifacts/leads_weekly_export_v2",
   "offline": true,
@@ -45,7 +46,7 @@
     "crew1": "template"
   },
   "call_list_rows": 0,
-  "id": "f161f32b-8bec-47bf-96e6-412ef296eca7",
+  "id": "b373663b-cb0d-40c3-83a8-d5cd5e21f34f",
   "artifacts": {
     "crew1/clean_data.csv": true,
     "crew1/eda_report.html": true,

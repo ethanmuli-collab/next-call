@@ -31,8 +31,8 @@ def make_tools(ctx: RunContext) -> dict:
 
     @tool("train_and_compare_models")
     def train_tool() -> str:
-        """Train logistic regression and gradient boosting on a time-based split, compare them against
-        calling in arrival order, save the winner to model.joblib and return all metrics as JSON."""
+        """Train logistic regression and gradient boosting on the split the contract prescribes, compare them
+        against calling in arrival order, save the winner to model.joblib and return all metrics as JSON."""
         ctx.results["evaluation"] = train_and_compare(features_csv, ctx.crew2 / "model.joblib",
                                                       load_contract(contract_json))
         return json.dumps(ctx.results["evaluation"], ensure_ascii=False)

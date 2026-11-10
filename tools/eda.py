@@ -17,6 +17,17 @@ INK = "#52514e"   # secondary text
 SURFACE = "#fcfcfb"
 RT_BINS = [-0.1, 60, 240, 1440, 4320, float("inf")]
 RT_LABELS = ["< 1h", "1-4h", "4-24h", "1-3 days", "> 3 days"]
+MIN_GROUP = 30
+SITE_BINS = [-0.1, 0, 60, 300, 900, float("inf")]  # time_on_site_sec (kaggle profile)
+SITE_LABELS = ["0 (never visited)", "< 1 min", "1-5 min", "5-15 min", "> 15 min"]
+# Categorical columns worth a conversion-rate breakdown, per dataset profile; only those present are used.
+# An empty title means: compute the rates, but draw no chart.
+RATE_COLS = {"source": "Conversion rate by lead source", "course_interest": "Conversion rate by course",
+             "age_band": "Conversion rate by age band", "region": "",
+             "webinar_attended": "Conversion rate: webinar attended (1) vs not (0)",
+             "lead_origin": "Conversion rate by lead origin", "lead_source": "Conversion rate by lead source",
+             "occupation": "Conversion rate by occupation", "specialization": "Conversion rate by specialization",
+             "do_not_email": "", "free_copy_requested": ""}
 
 
 def load_clean(path: Path) -> pd.DataFrame:
@@ -46,15 +57,21 @@ def compute_facts(df: pd.DataFrame) -> dict:
         f["date_from"] = str(df["created_at"].min().date())
         f["date_to"] = str(df["created_at"].max().date())
         f["leads_per_month"] = round(len(df) / max(1, (df["created_at"].max() - df["created_at"].min()).days / 30.4), 1)
-    for col in ["source", "course_interest", "age_band", "region", "webinar_attended"]:
+    for col in RATE_COLS:
         if col in df and len(lab):
             r = _rate_by(df, col)
+            r = r[r["leads"] >= MIN_GROUP]  # a rate from a handful of leads is noise, not a fact
             f[f"rate_by_{col}"] = {str(k): round(float(v), 4) for k, v in r["conversion_rate"].items()}
     if "response_time_min" in df and len(lab):
         b = pd.cut(lab["response_time_min"], RT_BINS, labels=RT_LABELS)
         f["rate_by_response_time"] = {str(k): round(float(v), 4) for k, v in
                                       lab.groupby(b, observed=True)["converted"].mean().items()}
         f["median_response_time_min"] = float(df["response_time_min"].median())
+    if "time_on_site_sec" in df and len(lab):
+        b = pd.cut(lab["time_on_site_sec"], SITE_BINS, labels=SITE_LABELS)
+        f["rate_by_time_on_site"] = {str(k): round(float(v), 4) for k, v in
+                                     lab.groupby(b, observed=True)["converted"].mean().items()}
+        f["median_time_on_site_sec"] = float(df["time_on_site_sec"].median())
     if "pages_viewed" in df:
         f["median_pages_viewed"] = float(df["pages_viewed"].median())
     nulls = df.isna().mean()
@@ -101,11 +118,8 @@ def build_eda_report(clean_path: Path, out_html: Path) -> dict:
     facts = compute_facts(df)
     sections: list[str] = []
     lab = df[df["converted"].notna()] if "converted" in df else df.iloc[0:0]
-    for col, title in [("source", "Conversion rate by lead source"),
-                       ("course_interest", "Conversion rate by course"),
-                       ("age_band", "Conversion rate by age band"),
-                       ("webinar_attended", "Conversion rate: webinar attended (1) vs not (0)")]:
-        if col in df and len(lab):
+    for col, title in RATE_COLS.items():
+        if title and col in df and len(lab):
             r = _rate_by(df, col)
             sections.append(f"<h2>{title}</h2>{_chart(r['conversion_rate'], title)}"
                             + r.style.format({"conversion_rate": "{:.1%}"}).to_html())
@@ -115,6 +129,12 @@ def build_eda_report(clean_path: Path, out_html: Path) -> dict:
         sections.append("<h2>Speed to lead: conversion by time to first call</h2>"
                         + _chart(r["conversion_rate"], "Conversion by time to first call")
                         + r.style.format({"conversion_rate": "{:.1%}"}).to_html())
+    if "time_on_site_sec" in df and len(lab):
+        b = pd.cut(lab["time_on_site_sec"], SITE_BINS, labels=SITE_LABELS)
+        r = lab.groupby(b, observed=True)["converted"].agg(conversion_rate="mean", leads="count")
+        sections.append("<h2>Engagement: conversion by time spent on the website</h2>"
+                        + _chart(r["conversion_rate"], "Conversion by time on site")
+                        + r.style.format({"conversion_rate": "{:.1%}"}).to_html())
     if "created_at" in df:
         weekly = df.set_index("created_at").resample("W")["lead_id"].count()
         weekly.index = weekly.index.strftime("%Y-%m-%d")
@@ -123,7 +143,7 @@ def build_eda_report(clean_path: Path, out_html: Path) -> dict:
     desc = num.describe().T.round(2).to_html(classes="t")
     nulls = df.isna().mean().rename("null_fraction").to_frame().style.format("{:.1%}").to_html()
     cats = "".join(f"<h3>{c}</h3>" + df[c].value_counts().head(10).to_frame().to_html()
-                   for c in ["source", "course_interest", "age_band", "region"] if c in df)
+                   for c in RATE_COLS if c in df and df[c].dtype == object)
     page = f"""<!doctype html><html><head><meta charset="utf-8"><title>EDA - leads</title>
 <style>body{{font-family:Segoe UI,Arial,sans-serif;background:{SURFACE};color:#0b0b0b;max-width:900px;margin:24px auto;padding:0 16px}}
 table{{border-collapse:collapse;font-size:13px;margin:8px 0 20px}}td,th{{border-bottom:1px solid #e6e5e0;padding:4px 10px;text-align:right}}
@@ -150,6 +170,22 @@ def _pct(d: dict, key: str) -> str:
 
 def template_insights_narrative(facts: dict) -> str:
     """Offline business summary built only from computed facts."""
+    if "rate_by_lead_origin" in facts:  # kaggle profile: no dates, no open leads
+        lines = [f"- The dataset holds **{facts['rows']:,} leads**; **{_pct(facts, 'conversion_rate')}** converted."]
+        site = facts.get("rate_by_time_on_site", {})
+        if site:
+            lo, hi = next(iter(site.items())), list(site.items())[-1]
+            lines.append(f"- **Engagement is the clearest signal:** leads who spent {hi[0]} on the site convert at "
+                         f"{hi[1]:.1%}, versus {lo[1]:.1%} for {lo[0]}.")
+        for key, label in [("rate_by_lead_origin", "Lead origin"), ("rate_by_occupation", "Occupation"),
+                           ("rate_by_lead_source", "Source")]:
+            d = facts.get(key, {})
+            if d:
+                best, worst = next(iter(d.items())), list(d.items())[-1]
+                lines.append(f"- **{label}:** {best[0]} converts at {best[1]:.1%}, {worst[0]} at {worst[1]:.1%}.")
+        lines.append("- **Recommendation:** rank leads by predicted conversion instead of calling in list order, and "
+                     "treat time on site and lead origin as the first things a rep looks at.")
+        return "\n".join(lines)
     lines = [f"- We received **{facts['rows']:,} leads** ({facts.get('leads_per_month', 0):.0f}/month); "
              f"**{_pct(facts, 'conversion_rate')}** of closed leads enrolled. "
              f"**{facts['open_leads']} leads are still open** and are today's call candidates."]

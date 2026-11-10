@@ -8,6 +8,10 @@ It never adapts to the data, so a renamed column or a changed unit cannot be
 from __future__ import annotations
 
 CONTRACT_VERSION = "1.0"
+DATASET_NAME = "admissions_leads_clean"
+TARGET_DEFINITION = "lead enrolled in a paid course; null = still open"
+TIME_COLUMN = "created_at"
+SPLIT_POLICY = "time-based: train on older leads, test on the most recent ones"
 
 SOURCES = ["facebook_form", "google_ads", "webinar", "organic_site", "referral"]
 COURSES = ["ai_developers", "data_analyst", "fullstack", "cyber", "qa_automation", "ux_ui"]

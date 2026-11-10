@@ -14,15 +14,22 @@ import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
-from config import ARTIFACTS_DIR, BROKEN_EXPORT, CLEAN_EXPORT, CREW1_FILES, CREW2_FILES, is_offline, run_dir_for
+from config import (ARTIFACTS_DIR, BROKEN_EXPORT, CLEAN_EXPORT, CREW1_FILES, CREW2_FILES, KAGGLE_EXPORT, is_offline,
+                    run_dir_for)
 from feedback import OUTCOMES, list_outcomes, record_outcome
 
 st.set_page_config(page_title="Next Call", page_icon="📞", layout="wide")
 
+# label -> (dataset profile, raw input, run folder, numeric column the "break it" button rescales)
 INPUTS = {
-    "Weekly export (normal)": CLEAN_EXPORT,
-    "Weekly export v2 (broken: renamed column + minutes → seconds)": BROKEN_EXPORT,
+    "Synthetic CRM - weekly export (normal)":
+        ("synthetic", CLEAN_EXPORT, run_dir_for(CLEAN_EXPORT), "response_time_min"),
+    "Synthetic CRM - weekly export v2 (broken: renamed column + minutes → seconds)":
+        ("synthetic", BROKEN_EXPORT, run_dir_for(BROKEN_EXPORT), "response_time_min"),
 }
+if KAGGLE_EXPORT.exists():
+    INPUTS["Kaggle - Lead Scoring Dataset (real data, 9,240 leads)"] = (
+        "kaggle", KAGGLE_EXPORT, ARTIFACTS_DIR / "kaggle_lead_scoring", "time_on_site_sec")
 
 CSS = """
 <style>
@@ -168,7 +175,7 @@ def _result(summary: dict, run_dir: Path) -> None:
             table = pd.DataFrame(res).T.rename_axis("model").reset_index()
             table["model"] = table["model"].str.replace("_", " ") + table["model"].map(lambda x: "  ★" if x == sel else "")
             cols = [c for c in ["model", "roc_auc", "pr_auc", "capture_at_20pct", "lift_at_top10pct", "brier"] if c in table]
-            st.markdown("##### Model comparison (time-based holdout)")
+            st.markdown(f"##### Model comparison ({'stratified' if m.get('split', {}).get('policy') else 'time-based'} holdout)")
             st.dataframe(table[cols], hide_index=True, width="stretch", column_config={
                 "roc_auc": st.column_config.NumberColumn("ROC-AUC", format="%.3f"),
                 "pr_auc": st.column_config.NumberColumn("PR-AUC", format="%.3f"),
@@ -177,6 +184,9 @@ def _result(summary: dict, run_dir: Path) -> None:
                 "lift_at_top10pct": st.column_config.NumberColumn("Lift @ top 10%", format="%.2f"),
                 "brier": st.column_config.NumberColumn("Brier", format="%.3f")})
             st.caption("★ selected model. The baseline calls leads in arrival order, as the team does today.")
+        if not summary.get("call_list_rows"):
+            st.info("No call list for this dataset: every lead already has an outcome. "
+                    "The daily call list comes from the synthetic CRM profile.")
     elif summary["status"] == "gate_failed":
         errs, warns = gate.get("errors", []), gate.get("warnings", [])
         st.markdown(f"<div class='nc-banner fail'>The contract gate stopped the Flow - {len(errs)} problem(s)"
@@ -235,9 +245,8 @@ tab_run, tab_art, tab_calls = st.tabs(["Run pipeline", "Artifacts", "Today's cal
 with tab_run:
     steps_slot = st.empty()
     with st.container(border=True):
-        choice = st.radio("Input export", list(INPUTS))
-        input_path = INPUTS[choice]
-        run_dir = run_dir_for(input_path)
+        choice = st.radio("Dataset and input", list(INPUTS))
+        dataset, input_path, run_dir, unit_col = INPUTS[choice]
         c1, c2 = st.columns(2)
         use_fb = c1.checkbox("Retrain with outcomes recorded by reps", value=False,
                              help="Final outcomes (enrolled / not interested) become training labels.")
@@ -247,18 +256,19 @@ with tab_run:
         b1, b2 = st.columns([1, 2])
         run_clicked = b1.button("▶ Run the Flow", type="primary", width="stretch")
         clean_csv = run_dir / "crew1" / "clean_data.csv"
-        break_clicked = b2.button("🧪 Break it on purpose: minutes → hours in clean_data.csv",
+        break_clicked = b2.button(f"🧪 Break it on purpose: change the unit of {unit_col} in clean_data.csv",
                                   disabled=not clean_csv.exists(), width="stretch",
-                                  help="The brief's Monday-morning scenario: same column name, different unit, "
+                                  help="The brief's Monday-morning scenario: the values are divided by 60 "
+                                       "(minutes → hours, or seconds → minutes), same column name, "
                                        "then the Flow re-validates the handoff. "
                                        "Run the Flow normally afterwards to restore the clean data.")
     if break_clicked:
         df = pd.read_csv(clean_csv, encoding="utf-8")
-        df["response_time_min"] = df["response_time_min"] / 60  # minutes -> hours, same column name
+        df[unit_col] = df[unit_col] / 60  # minutes -> hours / seconds -> minutes, same column name
         df.to_csv(clean_csv, index=False, encoding="utf-8")
-        _run_flow(input_path, run_dir, from_handoff=True)
+        _run_flow(input_path, run_dir, from_handoff=True, dataset=dataset)
     elif run_clicked:
-        _run_flow(input_path, run_dir, use_feedback=use_fb, from_handoff=from_handoff)
+        _run_flow(input_path, run_dir, use_feedback=use_fb, from_handoff=from_handoff, dataset=dataset)
     summary = _summary(run_dir)
     steps_slot.markdown(_stepper(summary), unsafe_allow_html=True)
     _result(summary, run_dir)

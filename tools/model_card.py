@@ -12,11 +12,38 @@ def model_card_facts(ev: dict, contract: dict, feat: dict) -> dict:
             "trained_on_rows": ev["final_model_trained_on_rows"], "n_features": feat["n_features"],
             "contract_version": contract["contract_version"], "source_export": contract["source_export"],
             "as_of": contract["as_of"], "excluded_from_model": contract["excluded_from_model"],
+            "dataset": contract.get("dataset", ""),
             "top_features": list(ev["top_features"])[:6]}
+
+
+KAGGLE_NARRATIVE = """## Purpose and intended use
+Rank the leads of an online-course company (X Education, public Kaggle dataset) by how likely they are to become
+paying customers, so the sales team calls the most promising leads first. It supports a human decision about call
+order; it never decides who is *not* contacted.
+
+**Intended users:** sales reps and their team lead. **Out of scope:** pricing, eligibility or any automated rejection.
+
+## Limitations
+- Trained on {rows:,} historical leads of one company; the public file has **no timestamp**, so the holdout is a
+  stratified random split. A random split can look better than real future performance.
+- Columns written by the sales team after contact (Tags, Lead Quality, Lead Profile, Last Activity) were removed
+  as leakage. Scores are therefore lower than in notebooks that keep them, and more honest.
+- `time_on_site_sec` is assumed to be in seconds, as declared in the contract; the gate checks its median.
+- About a third of the leads did not choose a specialization or city (the form default "Select"); these are kept
+  as `not_selected`, which is itself a signal of low engagement.
+- The dataset licence is not stated on Kaggle, so the raw and clean rows are not committed to the repository.
+
+## Ethical considerations
+- **Fairness:** occupation and city group are features. A low score must never mean "do not call"; it only changes
+  the order. Monitor conversion and contact rates per occupation and city group.
+- **Privacy:** the dataset has no names, emails or phone numbers; the lead number is used only as a key.
+- **Human in the loop:** the score orders the list, a person makes the call and records the outcome."""
 
 
 def template_model_card_narrative(f: dict) -> str:
     """Offline narrative sections (purpose, use, limitations, ethics)."""
+    if f.get("dataset", "").startswith("kaggle"):
+        return KAGGLE_NARRATIVE.format(rows=f["trained_on_rows"])
     return f"""## Purpose and intended use
 Rank today's **open** admissions leads by how likely they are to enroll, so a rep calls the right people first,
 while the lead is still warm. It supports a human decision (who to call first); it never decides who is *not* served.
@@ -45,6 +72,9 @@ eligibility decisions, and any use outside the college's own leads.
 
 def write_model_card(f: dict, narrative: str, out_md: Path, mode: str) -> None:
     h, b = f["holdout"], f["baseline"]
+    timed = not f["split"].get("policy")
+    split_text = (f"time-based: test = leads created on/after {f['split']['cutoff']}" if timed
+                  else f["split"]["policy"])
     excluded = "\n".join(f"- `{k}`: {v}" for k, v in f["excluded_from_model"].items())
     out_md.write_text(f"""# Model card - Next Call lead prioritisation
 
@@ -55,11 +85,11 @@ _Narrative written by: {mode}. Metrics and data facts filled in by the run._
 | model | `{f['model_name']}` (scikit-learn) |
 | task | binary classification: will this lead enroll? (`converted`) |
 | artifact | `model.joblib` |
-| dataset contract | v{f['contract_version']} (from `{f['source_export']}`, data as of {f['as_of']}) |
+| dataset contract | v{f['contract_version']} (from `{f['source_export']}`, data as of {f['as_of'] or 'n/a - no time column'}) |
 | training rows | {f['trained_on_rows']:,} labelled leads, {f['n_features']} features |
-| split | time-based: test = leads created on/after {f['split']['cutoff']} |
+| split | {split_text} |
 
-## Metrics (time-based holdout)
+## Metrics ({'time-based' if timed else 'stratified'} holdout)
 
 | metric | model | call in arrival order |
 |---|---|---|

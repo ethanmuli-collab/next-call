@@ -18,6 +18,7 @@ class RunContext:
     run_dir: Path
     raw_path: Path | None = None          # only Crew 1 gets this
     feedback: dict[str, int] | None = None
+    dataset: str = "synthetic"            # dataset profile: which cleaning tool and contract spec apply
     results: dict = field(default_factory=dict)
 
     @property

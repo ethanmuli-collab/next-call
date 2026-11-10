@@ -41,13 +41,13 @@
 ## Phase 2 - נתונים אמיתיים (Kaggle) · יעד 05.11
 | ID | משימה | ספק | סטטוס | בדיקה | תוצאה | שקף |
 |---|---|---|---|---|---|---|
-| T2.1 | הורדת Leads.csv (המשתמש) ל-`data/kaggle/`, תיעוד מקור ורישיון | S3.1 | todo | מספר שורות ועמודות מודפס; רישיון רשום ב-SPEC S13 | | 7 |
-| T2.2 | פרופיילינג: target, nulls, `Select`, עמודות דליפה, יחידות | S3.1 | todo | דוח פרופיילינג; רשימת דליפה מנומקת ב-SPEC | | 7 |
-| T2.3 | הפרדת חוזה לפרופילים: `spec_synthetic.py` + `spec_kaggle.py` | S5.1 | todo | unittest קיימים ירוקים + בדיקה חדשה לחוזה kaggle | | 8 |
-| T2.4 | כלי ניקוי ל-Kaggle (`Select`→null, נרמול קטגוריות) | S4 | todo | השער עובר על הנתונים הנקיים | | 8 |
-| T2.5 | בחירת פרופיל ב-Flow: `--dataset kaggle\|synthetic` | S3, S7 | todo | שתי הריצות status=ok; תיקיות artifacts נפרדות | | 9 |
-| T2.6 | צוות 2 על Kaggle: stratified split, 2 מודלים + baseline | S6 | todo | `evaluation_report.md` עם ROC-AUC/PR-AUC/lift; ריצה חוזרת זהה | | 10 |
-| T2.7 | הדגמת שבירה ב-Kaggle (שינוי יחידה) + unittest | S5.4 | todo | השער נכשל עם הודעה קריאה; הבדיקה ירוקה | | 11 |
+| T2.1 | הורדת Leads.csv (המשתמש) ל-`data/kaggle/`, תיעוד מקור ורישיון | S3.1 | verified | מספר שורות ועמודות מודפס; רישיון רשום ב-SPEC S13 | הורד מ-Kaggle (archive.zip, 420KB): 9,240 שורות, 37 עמודות. רישיון: Unknown, ולכן הנתונים לא נכנסים לגיט | 9 |
+| T2.2 | פרופיילינג: target, nulls, `Select`, עמודות דליפה, יחידות | S3.1 | verified | דוח פרופיילינג; רשימת דליפה מנומקת ב-SPEC | שיעור המרה 38.5%, `Select` ב-21%-55% מ-4 עמודות, אין חותמת זמן. רשימת הדליפה מנומקת ב-`contract/spec_kaggle.py` (`EXCLUDED_FROM_MODEL`) ונכתבת לחוזה | 9 |
+| T2.3 | הפרדת חוזה לפרופילים: `spec_synthetic.py` + `spec_kaggle.py` | S5.1 | verified | unittest קיימים ירוקים + בדיקה חדשה לחוזה kaggle | `contract/spec.py` (synthetic) + `contract/spec_kaggle.py`, נבחרים ב-`get_spec()`. unittest 10/10 (6 קיימות + 4 חדשות) | 9 |
+| T2.4 | כלי ניקוי ל-Kaggle (`Select`→null, נרמול קטגוריות) | S4 | verified | השער עובר על הנתונים הנקיים | `tools/cleaning_kaggle.py`: 12 מתוך 37 עמודות, `Select`→`not_selected`, מקורות נדירים→`other`, השלמת חציון. השער עבר: 18 בדיקות | 9 |
+| T2.5 | בחירת פרופיל ב-Flow: `--dataset kaggle\|synthetic` | S3, S7 | verified | שתי הריצות status=ok; תיקיות artifacts נפרדות | `--dataset kaggle` → `artifacts/kaggle_lead_scoring/` status=ok, 8 תוצרים; synthetic → `artifacts/leads_weekly_export/` status=ok; smoke test עובר. נבדק גם באפליקציה | 9 |
+| T2.6 | צוות 2 על Kaggle: stratified split, 2 מודלים + baseline | S6 | verified | `evaluation_report.md` עם ROC-AUC/PR-AUC/lift; ריצה חוזרת זהה | stratified split (seed 42), 7,392/1,848: HistGradientBoosting ROC-AUC 0.884, PR-AUC 0.836 (נבחר); LR 0.872/0.820; top 20% תופס 45% מול 20% בסדר הרשימה. המדדים זהים בריצה חוזרת ובמצב LLM | 9 |
+| T2.7 | הדגמת שבירה ב-Kaggle (שינוי יחידה) + unittest | S5.4 | verified | השער נכשל עם הודעה קריאה; הבדיקה ירוקה | `time_on_site_sec` חולק ב-60 + `--from-handoff`: gate_failed (unit: חציון 4.13 מחוץ ל-100-700 שניות), exit 1, אין תוצרי crew2. `test_seconds_to_minutes_detected` ירוקה | 9 |
 
 ## Phase 3 - מצב LLM · יעד 05.11
 | ID | משימה | ספק | סטטוס | בדיקה | תוצאה | שקף |
@@ -81,7 +81,7 @@
 - 2026-11-10 · T4.1 · עיצוב מחדש של `app.py`: פס שלבים, כרטיסי KPI, מסך כישלון שער, כל 8 התוצרים, רשימת שיחות ככרטיסים, כפתור "Break it on purpose".
 - 2026-11-10 · T5.1 · README נכתב מחדש ונבדק ב-clone נקי עם סביבה וירטואלית חדשה.
 - 2026-11-10 · T3.1, T3.2 · ריצת LLM מלאה, מדדים זהים ל-offline. T5.2, T5.3 · קריטריוני הקבלה סומנו, המצגת הושלמה (11 שקפים).
-- 2026-11-10 · Phase 2 (Kaggle) ו-T4.2/T4.3 לא בוצעו בגלל הזמן; מוצגים במצגת כצעד הבא.
+- 2026-11-10 · Phase 2 (Kaggle) בוצע בסוף היום כפרופיל נתונים שני: חוזה משלו, כלי ניקוי, stratified split, הדגמת שבירה ובדיקות. T4.2/T4.3 (אופציונליים) לא בוצעו.
 
 ## קישורים
 - ריפו: https://github.com/ethanmuli-collab/next-call

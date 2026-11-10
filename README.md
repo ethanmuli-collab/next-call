@@ -43,6 +43,9 @@ flowchart LR
   versioned code, so the contract cannot silently "adapt" to broken data.
 - `contract/validate.py` - the gate. Plain pandas, reports **all** problems at once, with rename and unit hints.
 - Crew 2's tools only receive `crew1/clean_data.csv` and `crew1/dataset_contract.json`. Its context has no raw path.
+- **Two dataset profiles**, each with its own contract spec and cleaning tool, same gate and same Flow:
+  `synthetic` (a college CRM export, `contract/spec.py`) and `kaggle` (the real
+  [Lead Scoring Dataset](https://www.kaggle.com/datasets/amritachatterjee09/lead-scoring-dataset), `contract/spec_kaggle.py`).
 - Every run writes `artifacts/<input name>/`: `crew1/*`, `crew2/*`, `call_list.json`, `gate_report.json`, `flow.log`,
   `run_summary.json`. The artifacts of the reference runs are committed.
 
@@ -63,6 +66,18 @@ streamlit run app.py                                       # the app
 ```
 
 The synthetic exports in `data/raw/` are generated on the first run (fixed seed), so no download is needed.
+
+**Real data (optional):** download the Kaggle
+[Lead Scoring Dataset](https://www.kaggle.com/datasets/amritachatterjee09/lead-scoring-dataset) and put
+`Lead Scoring.csv` in `data/kaggle/`. Then:
+
+```bash
+python flow.py --dataset kaggle          # 9,240 real leads -> artifacts/kaggle_lead_scoring/
+```
+
+The app shows the Kaggle option as soon as the file is there. The dataset's licence is not stated on Kaggle, so the
+raw file, `clean_data.csv` and `features.csv` of this profile stay local (git-ignored); the reports, the contract,
+the model and the run summary are committed.
 Without an API key everything runs in **offline mode** (see below). For LLM mode copy `env.example` to `.env` and set
 `OPENAI_API_KEY`.
 
@@ -71,7 +86,7 @@ Other commands:
 ```bash
 python flow.py --from-handoff            # skip Crew 1, re-validate the existing clean_data.csv, then model
 python flow.py --run-dir artifacts/my_run  # write the artifacts somewhere else
-python -m unittest -v tests.test_contract  # 6 contract unit tests
+python -m unittest -v                    # 10 contract unit tests (both dataset profiles)
 python smoke_test.py                     # end to end, offline, outbound network blocked
 python webhook.py                        # Flask: http://127.0.0.1:5055/call-list?top=20
 ```
@@ -95,7 +110,10 @@ A validation you have never seen fail is untested code. Three ways to watch the 
    *Break it on purpose*: it turns minutes into hours in `crew1/clean_data.csv`, keeps the column name, and re-runs
    from the handoff. The gate refuses to train. By hand: edit the CSV, then `python flow.py --from-handoff`.
    Run the Flow normally afterwards to restore the clean data.
-3. **Unit tests** cover: renamed column, minutes → seconds, out-of-range value, unknown category, and a contract with a
+3. **Kaggle profile:** the same button divides `time_on_site_sec` by 60 (seconds → minutes). The median drops from
+   248 to 4, outside the contract's 100-700 seconds, and the gate stops the Flow.
+4. **Unit tests** (10) cover: renamed column, minutes → seconds, seconds → minutes, out-of-range value, unknown
+   category, the `Select` form placeholder leaking through, a leakage column coming back, and a contract with a
    column spec deleted.
 
 ## Mapping to the brief
@@ -134,9 +152,22 @@ only the wording of the narratives and the call openers differs.
 If the LLM fails mid-run (network, quota), the Flow logs a warning and falls back to the offline path for that step.
 `NEXT_CALL_OFFLINE=1` forces offline mode.
 
-## Results (reference run, synthetic data, offline)
+## Results
 
-Time-based holdout of the 972 newest closed leads:
+**Kaggle Lead Scoring (real data).** 9,240 leads, 38.5% converted. Stratified 80/20 split with a fixed seed (the
+dataset has no timestamp), 1,848 test leads. Columns the sales team fills in after contact (`Tags`, `Lead Quality`,
+`Lead Profile`, `Last Activity`) are dropped as leakage, so the scores are lower than in notebooks that keep them.
+
+| Model | ROC-AUC | PR-AUC | Conversions reached in the top 20% |
+|---|---|---|---|
+| HistGradientBoosting (selected) | 0.884 | 0.836 | 45% |
+| Logistic regression | 0.872 | 0.820 | 45% |
+| Baseline: list order | - | - | 20% |
+
+With a 38.5% base rate the top 20% of a list can hold at most 52% of the conversions, so 45% is close to the ceiling;
+96% of the leads in the top 10% converted.
+
+**Synthetic college CRM (reference run, offline).** Time-based holdout of the 972 newest closed leads:
 
 | Model | ROC-AUC | PR-AUC | Enrolments reached in the top 20% |
 |---|---|---|---|
@@ -146,8 +177,10 @@ Time-based holdout of the 972 newest closed leads:
 
 ## Limitations
 
-- **Synthetic data.** The leads are generated with a known signal (speed to lead, webinar, referrals, intent words)
-  plus noise. Real CRM data will be weaker and messier, so the metrics above describe the pipeline, not a real market.
+- **The call list runs on synthetic data.** Those leads are generated with a known signal (speed to lead, webinar,
+  referrals, intent words) plus noise, because the public Kaggle file has no timestamps, no free text and no open
+  leads. The synthetic metrics describe the pipeline, not a real market; the Kaggle metrics are the real ones.
+- The Kaggle holdout is a random split (no time column), which can look better than true future performance.
 - Text features are keyword flags, not a language model. `response_time_min` is partly rep-controlled and is imputed
   for leads nobody called yet.
 - Age band and region are model features. See the fairness notes in `model_card.md`; the score only orders calls, it

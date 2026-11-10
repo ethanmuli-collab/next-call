@@ -8,6 +8,7 @@ from crewai.tools import tool
 
 from crews.common import RunContext
 from tools.cleaning import clean_leads
+from tools.cleaning_kaggle import clean_kaggle
 from tools.contract_tools import build_contract
 from tools.eda import build_eda_report
 
@@ -20,7 +21,8 @@ def make_tools(ctx: RunContext) -> dict:
     def clean_tool() -> str:
         """Ingest the raw weekly CRM lead export, normalise spellings, remove duplicates, fix glitches
         and write clean_data.csv. Returns a JSON cleaning log."""
-        ctx.results["cleaning"] = clean_leads(ctx.raw_path, clean_csv, ctx.feedback)
+        clean = clean_kaggle if ctx.dataset == "kaggle" else clean_leads
+        ctx.results["cleaning"] = clean(ctx.raw_path, clean_csv, ctx.feedback)
         return json.dumps(ctx.results["cleaning"], ensure_ascii=False)
 
     @tool("build_eda_report")
@@ -34,7 +36,7 @@ def make_tools(ctx: RunContext) -> dict:
     def contract_tool() -> str:
         """Write dataset_contract.json (schema, allowed values, units, ranges, assumptions, observed
         profile) for clean_data.csv and return a short JSON summary of it."""
-        c = build_contract(clean_csv, ctx.crew1 / "dataset_contract.json", ctx.raw_path.name)
+        c = build_contract(clean_csv, ctx.crew1 / "dataset_contract.json", ctx.raw_path.name, ctx.dataset)
         ctx.results["contract"] = c
         cols = {k: (v["observed"] if isinstance(v["observed"], str) else "ok") for k, v in c["columns"].items()}
         return json.dumps({"row_count": c["row_count"], "as_of": c["as_of"], "columns": cols,
@@ -60,8 +62,8 @@ def build_analyst_crew(ctx: RunContext, llm: LLM) -> Crew:
                                         "WARNING about missing or unknown columns.",
              expected_output="A short bullet list of cleaning steps and warnings."),
         Task(agent=eda, description="Call the build_eda_report tool once. Using ONLY numbers it returns, write a "
-                                    "business summary for an admissions manager: 4-6 markdown bullets (speed to "
-                                    "lead, channels, webinar effect, courses) and one recommendation.",
+                                    "business summary for an admissions manager: 4-6 markdown bullets (what drives "
+                                    "conversion: speed or engagement, channels, segments) and one recommendation.",
              expected_output="4-6 markdown bullets plus a one-line recommendation."),
         Task(agent=contract, description="Call the publish_dataset_contract tool once. Then list, in 3 bullets, the "
                                          "assumptions the modeling crew must respect and any column marked missing.",

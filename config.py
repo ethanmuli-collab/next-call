@@ -24,6 +24,7 @@ OUTCOMES_DB = DATA_DIR / "outcomes.db"
 
 CLEAN_EXPORT = RAW_DIR / "leads_weekly_export.csv"
 BROKEN_EXPORT = RAW_DIR / "leads_weekly_export_v2.csv"
+KAGGLE_EXPORT = DATA_DIR / "kaggle" / "Lead Scoring.csv"  # downloaded manually, not in git
 
 SEED = 42
 LLM_MODEL = os.getenv("NEXT_CALL_LLM_MODEL", "gpt-4o-mini")
